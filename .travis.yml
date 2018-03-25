@@ -1,11 +1,15 @@
 language: rust
 rust:
 - stable
-- beta
-- nightly
 sudo: false
 os:
 - linux
+addons:
+  apt:
+    packages:
+    - gcc-mingw-w64-i686
+    - gcc-mingw-w64-x86-64
+    - libudev-dev
 cache:
   directories:
   - "$HOME/.cargo"
@@ -17,6 +21,8 @@ matrix:
 env:
   matrix:
   - CARGO_FEATURES=
+  - CARGO_TARGET=x86_64-pc-windows-gnu
+    CARGO_FEATURES=
   global:
   - CARGO_QUIET=
   - CARGO_INCREMENTAL=0
@@ -33,7 +39,7 @@ deploy:
   on:
     tags: true
     all_branches: true
-    condition: "$TRAVIS_RUST_VERSION = stable"
+    condition: "$TRAVIS_RUST_VERSION = stable && -z $CARGO_TARGET"
 before_deploy:
 - cargo doc
 - cargo package
