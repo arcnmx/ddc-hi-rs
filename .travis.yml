@@ -1,0 +1,42 @@
+language: rust
+rust:
+- stable
+- beta
+- nightly
+sudo: false
+os:
+- linux
+cache:
+  directories:
+  - "$HOME/.cargo"
+  - target
+matrix:
+  fast_finish: true
+  allow_failures:
+  - rust: nightly
+env:
+  matrix:
+  - CARGO_FEATURES=
+  global:
+  - CARGO_QUIET=
+  - CARGO_INCREMENTAL=0
+  - secure: pyEzRCT8UNc35C1BeMexRvX54cVMM93Vddtndk5EbTuVkjcHo2L9z5z+EMT2G/CJrvHJWmsq93SOPDkMob273h835JV7+Uhwi2hfHERl9EHFb4/25bWQaLy31CKR0ubEAzlhubg3HstCkaif02UJ/BnmLWjFxPBkzEIAE44paP6qNA0KiNY3xmCyUnRz+ActiGLsm7qL/fUrSnk0ZhTWZNqT1+jrFi2R8g8kHAaTV9mO6v/gaq63TTO670IPfNmNq8CjPhy7Y53XfQqidBqG0io2WFlH0uH8imft7+iQe4WCiz54GfW2E/Az1hGS0fVE3FKBlzymMPGes8MNrsw5ekOO7BkxjgZlo35eR2snpNHKE1505MdPLpugm7xaXlDtCN4NiODYZpWJxeEhNx5MI8fFQrZNbBRY9UvjvhFwzWEWjwNq+iLSrfbwstoYvMWcVy3w4dzI5D9VbLVyGpSHlVKG5cYla+FIzmGIDfOHDqdf1peWTkF3zayOpNuDKq3sUReY3mgUJYazdKxOUuAJcwKnvE4iHDxFPSWeOAQszhKWwKPTtaEj8I9JCYKgdKelN6D8CqUF6PZEATpdHAVg/3V/QqwdvoseppH7N24+RXCGLEV40Au4MVY0EUq9rb2dYkbX1chZf5HXipoaSlWzUw07rnN64vf8Ta8FUQwvJgM=
+  - secure: UAqsxPm8zTgsjzELkycmNpzUNuJpGX9jxx0GaxBgyWA9IJz6yrfpZKgZmfbup+9+XSlY5IOW+GBLBVNp6WAnQvjs5CWTYenNWUvbZnAIBUDjF/2ui3+wtPjlV14E1gddw8QhMw//dAi6gtvoUgREzeAwLhfY/ij7JP1QZTjfr28Wx4Ci3x4Lzh+DNDkNjEKI3s/TbT1DIUYqiqqXlv38mIfzmtN5ppBJauPWJQrc9PmpXBqro3PRIqe2h49r/UK9Sh1iq/itFeK3sDPBvxO5hHVDUvZQ//gOXELoUdw6uhwTJqfuglXMaxCAjEdlNqVdzfJNutHBupaWHzoPcQ2xuDE73aHGrtxjpr2W6GOwDqH+a6ObnX4z1utYtTEJx03iSXP+Y34cM4xy7yuW/sWx3Ij0kT7FC/6Eyn7+73YnQ5mV626jCX9pxt9QJzeoP9zy5ZcyWy5ECIOBm/Xk3HvXjaAtv/X87Fw5vtQaZ0ZtOHUPpRIZisnkZvcZDvgyicy0JfCa1gmBN08XNDTm71Xj0mrbEJBl5E3zYqDNsZgmesUqGeVFbVasI5vji5rNhuqTjJCjCwDc1JVRLmvYM2ZWlDoGOWx/lp+o03aqa6uYiiHAoVU/G14teIEROdWkklIBH+k5wHuZRa5qVyS3ArATdE3vusIlb/g1E5mgUbhJnbA=
+before_install:
+- curl -L https://github.com/arcnmx/ci/archive/0.2.tar.gz | tar -xzC $HOME && . $HOME/ci-0.2/src
+script:
+- cargo test
+- cargo build
+deploy:
+  provider: script
+  script: 'true'
+  on:
+    tags: true
+    all_branches: true
+    condition: "$TRAVIS_RUST_VERSION = stable"
+before_deploy:
+- cargo doc
+- cargo package
+after_deploy:
+- cargo pages-publish
+- cargo publish

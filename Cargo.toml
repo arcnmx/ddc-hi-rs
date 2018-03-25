@@ -1,0 +1,27 @@
+[package]
+name = "ddc-hi"
+version = "0.0.1"
+authors = ["arcnmx"]
+
+description = "High level DDC/CI monitor control"
+keywords = ["ddc", "mccs", "vcp", "vesa"]
+
+documentation = "http://arcnmx.github.io/ddc-hi-rs/ddc_hi"
+repository = "https://github.com/arcnmx/ddc-hi-rs"
+readme = "README.md"
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "arcnmx/ddc-hi-rs" }
+maintenance = { status = "passively-maintained" }
+
+[dependencies]
+ddc = "^0.1.0"
+edid = "^0.2.0"
+
+[target.'cfg(windows)'.dependencies]
+ddc-winapi = "^0.1.0"
+nvapi = { version = "0.0.4", git = "https://github.com/arcnmx/nvapi-rs.git" }
+
+[target.'cfg(unix)'.dependencies]
+ddc-i2c = { version = "^0.1.0", features = ["with-linux", "with-linux-enumerate"] }
