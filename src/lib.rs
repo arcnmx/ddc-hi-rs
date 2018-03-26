@@ -16,7 +16,7 @@ extern crate ddc_winapi;
 #[cfg(feature = "has-nvapi")]
 extern crate nvapi;
 
-use std::io;
+use std::{io, fmt, str};
 use std::os::unix::fs::MetadataExt;
 use std::iter::FromIterator;
 use failure::Error;
@@ -212,6 +212,48 @@ pub enum Backend {
     /// NVIDIA NVAPI driver
     #[cfg(feature = "has-nvapi")]
     Nvapi,
+}
+
+impl fmt::Display for Backend {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            #[cfg(feature = "has-ddc-i2c")]
+            Backend::I2cDevice => "i2c-dev",
+            #[cfg(feature = "has-ddc-winapi")]
+            Backend::WinApi => "winapi",
+            #[cfg(feature = "has-nvapi")]
+            Backend::Nvapi => "nvapi",
+        })
+    }
+}
+
+impl str::FromStr for Backend {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            #[cfg(feature = "has-ddc-i2c")]
+            "i2c-dev" => Backend::I2cDevice,
+            #[cfg(feature = "has-ddc-winapi")]
+            "winapi" => Backend::WinApi,
+            #[cfg(feature = "has-nvapi")]
+            "nvapi" => Backend::Nvapi,
+            _ => return Err(()),
+        })
+    }
+}
+
+impl Backend {
+    pub fn values() -> &'static [Backend] {
+        &[
+            #[cfg(feature = "has-ddc-i2c")]
+            Backend::I2cDevice,
+            #[cfg(feature = "has-ddc-winapi")]
+            Backend::WinApi,
+            #[cfg(feature = "has-nvapi")]
+            Backend::Nvapi,
+        ]
+    }
 }
 
 pub struct Display {
