@@ -17,7 +17,6 @@ extern crate ddc_winapi;
 extern crate nvapi;
 
 use std::{io, fmt, str};
-use std::os::unix::fs::MetadataExt;
 use std::iter::FromIterator;
 use failure::Error;
 use ddc::{Ddc, Edid};
@@ -278,6 +277,8 @@ impl Display {
 
         #[cfg(feature = "has-ddc-i2c")]
         {
+            use std::os::unix::fs::MetadataExt;
+
             if let Ok(devs) = ddc_i2c::I2cDeviceEnumerator::new() {
                 displays.extend(devs
                     .map(|mut ddc| -> Result<_, Error> {
@@ -297,7 +298,7 @@ impl Display {
         #[cfg(feature = "has-ddc-winapi")]
         {
             if let Ok(devs) = ddc_winapi::Monitor::enumerate() {
-                displays.extend(devs
+                displays.extend(devs.into_iter()
                     .map(|ddc| {
                         let info = DisplayInfo::new(Backend::WinApi, monitor.description());
                         Display::new(
