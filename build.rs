@@ -9,13 +9,13 @@ fn emit_feature(name: &str) {
 }
 
 fn main() {
-    if cfg!(unix) {
+    if var("CARGO_CFG_UNIX").is_ok() {
         if feature_enabled("ddc-i2c") {
             emit_feature("has-ddc-i2c");
         }
     }
 
-    if cfg!(windows) {
+    if var("CARGO_CFG_WINDOWS").is_ok() {
         if feature_enabled("ddc-winapi") {
             emit_feature("has-ddc-winapi");
         }
