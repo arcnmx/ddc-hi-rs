@@ -53,6 +53,7 @@ pub struct DisplayInfo {
     pub edid_data: Option<Vec<u8>>,
     /// MCCS VCP version code.
     pub mccs_version: Option<mccs::Version>,
+    /// MCCS VCP feature information.
     pub mccs_database: mccs_db::Database,
 }
 
@@ -178,6 +179,9 @@ impl DisplayInfo {
         }
 
         if self.mccs_database.get(0xdf).is_none() {
+            if info.mccs_version.is_some() {
+                self.mccs_version = info.mccs_version.clone()
+            }
             self.mccs_database = info.mccs_database.clone()
         }
     }
@@ -187,7 +191,8 @@ impl DisplayInfo {
             let version = ddc.get_vcp_feature(0xdf)?;
             let version = mccs::Version::new(version.mh, version.ml);
             if version != mccs::Version::default() {
-                self.mccs_version = Some(version)
+                self.mccs_version = Some(version);
+                self.mccs_database = mccs_db::Database::from_version(&version);
             }
         }
 
@@ -216,6 +221,7 @@ pub struct Display {
 }
 
 impl Display {
+    /// Create a new display from the specified handle.
     pub fn new(handle: Handle, info: DisplayInfo) -> Self {
         Display {
             handle: handle,
@@ -224,6 +230,7 @@ impl Display {
         }
     }
 
+    /// Enumerate all detected displays.
     pub fn enumerate() -> Vec<Self> {
         let mut displays = Vec::new();
 
@@ -244,6 +251,7 @@ impl Display {
                 )
             }
         }
+
         #[cfg(feature = "has-ddc-winapi")]
         {
             if let Ok(devs) = ddc_winapi::Monitor::enumerate() {
@@ -259,6 +267,13 @@ impl Display {
             }
         }
 
+        #[cfg(feature = "has-nvapi")]
+        {
+            if let Ok(_) = nvapi::initialize() {
+                // TODO: this
+            }
+        }
+
         displays
     }
 
@@ -268,6 +283,7 @@ impl Display {
         &mut self.handle
     }
 
+    /// Information about the connected display.
     pub fn info(&self) -> &DisplayInfo {
         &self.info
     }
@@ -277,17 +293,21 @@ impl Display {
     pub fn update_capabilities(&mut self) -> Result<(), Error> {
         if !self.filled_caps {
             let (backend, id) = (self.info.backend, self.info.id.clone());
-            self.info.update_from(
-                &DisplayInfo::from_capabilities(
-                    backend, id,
-                    &self.handle.capabilities()?
-                )
+            let caps = self.handle.capabilities()?;
+            let info = DisplayInfo::from_capabilities(
+                backend, id,
+                &caps,
             );
+            if info.mccs_version.is_some() {
+                self.info.mccs_database = Default::default();
+            }
+            self.info.update_from(&info);
         }
 
         Ok(())
     }
 
+    /// Update some display info.
     pub fn update_from_ddc(&mut self) -> Result<(), Error> {
         self.info.update_from_ddc(&mut self.handle)
     }
