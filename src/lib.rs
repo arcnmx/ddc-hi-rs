@@ -441,7 +441,7 @@ impl ddc::DdcTable for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.table_read(code).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) =>
-                io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables"),
+                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables")),
         }
     }
 
@@ -451,7 +451,7 @@ impl ddc::DdcTable for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) =>
-                io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables"),
+                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables")),
         }
     }
 }
