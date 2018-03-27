@@ -21,7 +21,7 @@ use std::iter::FromIterator;
 use failure::Error;
 use ddc::Edid;
 
-pub use ddc::{Ddc, FeatureCode, VcpValue, VcpValueType, TimingMessage};
+pub use ddc::{Ddc, DdcTable, FeatureCode, VcpValue, VcpValueType, TimingMessage};
 
 /// Identifying information about an attached display.
 ///
@@ -399,7 +399,7 @@ impl Ddc for Handle {
         }
     }
 
-    fn get_vcp_feature(&mut self, code: ddc::FeatureCode) -> Result<ddc::VcpValue, Self::Error> {
+    fn get_vcp_feature(&mut self, code: FeatureCode) -> Result<VcpValue, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.get_vcp_feature(code).map_err(From::from),
@@ -408,7 +408,7 @@ impl Ddc for Handle {
         }
     }
 
-    fn set_vcp_feature(&mut self, code: ddc::FeatureCode, value: u16) -> Result<(), Self::Error> {
+    fn set_vcp_feature(&mut self, code: FeatureCode, value: u16) -> Result<(), Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(From::from),
@@ -426,7 +426,7 @@ impl Ddc for Handle {
         }
     }
 
-    fn get_timing_report(&mut self) -> Result<ddc::TimingMessage, Self::Error> {
+    fn get_timing_report(&mut self) -> Result<TimingMessage, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.get_timing_report().map_err(From::from),
@@ -436,8 +436,8 @@ impl Ddc for Handle {
     }
 }
 
-impl ddc::DdcTable for Handle {
-    fn table_read(&mut self, code: ddc::FeatureCode) -> Result<Vec<u8>, Self::Error> {
+impl DdcTable for Handle {
+    fn table_read(&mut self, code: FeatureCode) -> Result<Vec<u8>, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.table_read(code).map_err(From::from),
@@ -447,7 +447,7 @@ impl ddc::DdcTable for Handle {
         }
     }
 
-    fn table_write(&mut self, code: ddc::FeatureCode, offset: u16, value: &[u8]) -> Result<(), Self::Error> {
+    fn table_write(&mut self, code: FeatureCode, offset: u16, value: &[u8]) -> Result<(), Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
