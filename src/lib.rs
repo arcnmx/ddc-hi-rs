@@ -302,7 +302,7 @@ impl Display {
             if let Ok(devs) = ddc_winapi::Monitor::enumerate() {
                 displays.extend(devs.into_iter()
                     .map(|ddc| {
-                        let info = DisplayInfo::new(Backend::WinApi, monitor.description());
+                        let info = DisplayInfo::new(Backend::WinApi, ddc.description());
                         Display::new(
                             Handle::WinApi(ddc),
                             info,
@@ -443,7 +443,7 @@ impl ddc::DdcTable for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.table_read(code).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) =>
-                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables")),
+                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
         }
     }
 
@@ -453,7 +453,7 @@ impl ddc::DdcTable for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) =>
-                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables")),
+                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
         }
     }
 }
