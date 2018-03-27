@@ -113,6 +113,13 @@ impl DisplayInfo {
     }
 
     pub fn from_capabilities(backend: Backend, id: String, caps: &mccs::Capabilities) -> Self {
+        let edid = if let Some(ref edid) = caps.edid {
+            // TODO: return Result here? warn!()?
+            Self::from_edid(backend, id.clone(), edid.clone()).map_err(drop)
+        } else {
+            Err(())
+        };
+
         let mut res = DisplayInfo {
             backend: backend,
             id: id,
@@ -133,6 +140,11 @@ impl DisplayInfo {
         if let Some(ver) = res.mccs_version.as_ref() {
             res.mccs_database = mccs_db::Database::from_version(ver);
             res.mccs_database.apply_capabilities(caps);
+        }
+
+        if let Ok(edid) = edid {
+            // TODO: should this be edid.update_from(&res) instead?
+            res.update_from(&edid);
         }
 
         res
