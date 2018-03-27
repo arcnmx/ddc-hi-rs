@@ -19,7 +19,9 @@ extern crate nvapi;
 use std::{io, fmt, str};
 use std::iter::FromIterator;
 use failure::Error;
-use ddc::{Ddc, Edid};
+use ddc::Edid;
+
+pub use ddc::{Ddc, FeatureCode, VcpValue, VcpValueType, TimingMessage};
 
 /// Identifying information about an attached display.
 ///
