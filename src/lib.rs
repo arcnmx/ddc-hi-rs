@@ -27,7 +27,7 @@ extern crate mccs;
 extern crate mccs_caps;
 extern crate mccs_db;
 extern crate failure;
-#[cfg(feature = "has-ddc-i2c")]
+#[cfg(feature = "ddc-i2c")]
 extern crate ddc_i2c;
 #[cfg(feature = "has-ddc-winapi")]
 extern crate ddc_winapi;
@@ -387,7 +387,34 @@ impl Display {
 
         #[cfg(feature = "has-nvapi")]
         {
+            use std::rc::Rc;
+
             if let Ok(_) = nvapi::initialize() {
+                if let Ok(gpus) = nvapi::PhysicalGpu::enumerate() {
+                    for gpu in gpus {
+                        let gpu = Rc::new(gpu);
+                        let id_prefix = gpu.short_name().unwrap_or("NVAPI".into());
+                        if let Ok(ids) = gpu.display_ids_connected(nvapi::ConnectedIdsFlags::empty()) {
+                            for id in ids {
+                                let i2c = nvapi::I2c::new(gpu.clone(), id.display_id); // TODO: it says mask, is it actually `1<<display_id` instead?
+                                let mut ddc = ddc_i2c::I2cDdc::new(i2c);
+
+                                let id = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
+                                let mut edid = vec![0u8; 0x100];
+                                if let Ok(ddc) = ddc.read_edid(0, &mut edid)
+                                    .map_err(Error::from)
+                                    .and_then(|_| DisplayInfo::from_edid(Backend::Nvapi, id, edid)
+                                        .map_err(Error::from)
+                                    ).map(|info| Display::new(
+                                        Handle::Nvapi(ddc),
+                                        info,
+                                    )) {
+                                    displays.push(ddc);
+                                }
+                            }
+                        }
+                    }
+                }
                 // TODO: this
             }
         }
@@ -428,7 +455,9 @@ pub enum Handle {
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-winapi")]
     WinApi(ddc_winapi::Monitor),
-    // TODO: Nvapi
+    #[doc(hidden)]
+    #[cfg(feature = "has-nvapi")]
+    Nvapi(ddc_i2c::I2cDdc<nvapi::I2c<::std::rc::Rc<nvapi::PhysicalGpu>>>),
 }
 
 impl Handle {
@@ -448,6 +477,8 @@ impl ddc::DdcHost for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.sleep(),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.sleep(),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.sleep(),
         }
     }
 }
@@ -459,6 +490,8 @@ impl Ddc for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.capabilities_string().map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.capabilities_string().map_err(From::from),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.capabilities_string().map_err(From::from),
         }
     }
 
@@ -468,6 +501,8 @@ impl Ddc for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.get_vcp_feature(code).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.get_vcp_feature(code).map_err(From::from),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.get_vcp_feature(code).map_err(From::from),
         }
     }
 
@@ -477,6 +512,8 @@ impl Ddc for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.set_vcp_feature(code, value).map_err(From::from),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(From::from),
         }
     }
 
@@ -486,6 +523,8 @@ impl Ddc for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.save_current_settings().map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.save_current_settings().map_err(From::from),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.save_current_settings().map_err(From::from),
         }
     }
 
@@ -495,6 +534,8 @@ impl Ddc for Handle {
             Handle::I2cDevice(ref mut i2c) => i2c.get_timing_report().map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
             Handle::WinApi(ref mut monitor) => monitor.get_timing_report().map_err(From::from),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.get_timing_report().map_err(From::from),
         }
     }
 }
@@ -505,8 +546,10 @@ impl DdcTable for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.table_read(code).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) =>
+            Handle::WinApi(_) =>
                 Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.table_read(code).map_err(From::from),
         }
     }
 
@@ -515,8 +558,10 @@ impl DdcTable for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) =>
+            Handle::WinApi(_) =>
                 Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
         }
     }
 }
