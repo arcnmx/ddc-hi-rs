@@ -1,7 +1,25 @@
-//#![deny(missing_docs)]
+#![deny(missing_docs)]
 #![doc(html_root_url = "http://arcnmx.github.io/ddc-hi-rs/")]
 
 //! High level DDC/CI monitor controls.
+//!
+//! # Example
+//!
+//! ```rust,no_run
+//! use ddc_hi::{Ddc, Display};
+//!
+//! for mut display in Display::enumerate() {
+//!     display.update_capabilities().unwrap();
+//!     println!("{:?} {}: {:?} {:?}",
+//!			display.info.backend, display.info.id,
+//!			display.info.manufacturer_id, display.info.model_name
+//!		);
+//!     if let Some(feature) = display.info.mccs_database.get(0xdf) {
+//!			let value = display.handle.get_vcp_feature(feature.code).unwrap();
+//!         println!("{}: {:?}", feature.name.as_ref().unwrap(), value);
+//!     }
+//! }
+//! ```
 
 extern crate ddc;
 extern crate edid;
@@ -59,6 +77,7 @@ pub struct DisplayInfo {
 }
 
 impl DisplayInfo {
+    /// Create an empty `DisplayInfo`.
     pub fn new(backend: Backend, id: String) -> Self {
         DisplayInfo {
             backend: backend,
@@ -112,6 +131,7 @@ impl DisplayInfo {
         })
     }
 
+    /// Create a new `DisplayInfo` from parsed capabilities.
     pub fn from_capabilities(backend: Backend, id: String, caps: &mccs::Capabilities) -> Self {
         let edid = if let Some(ref edid) = caps.edid {
             // TODO: return Result here? warn!()?
@@ -150,6 +170,7 @@ impl DisplayInfo {
         res
     }
 
+    /// Merge in any missing information from another `DisplayInfo`
     pub fn update_from(&mut self, info: &DisplayInfo) {
         if self.manufacturer_id.is_none() {
             self.manufacturer_id = info.manufacturer_id.clone()
@@ -199,6 +220,11 @@ impl DisplayInfo {
         }
     }
 
+    /// Populate information from a DDC connection.
+    ///
+    /// This will read the VCP Version (`0xdf`) and fill in the `mccs_database`.
+    /// This data will be incomplete compared to being filled in from a capability
+    /// string.
     pub fn update_from_ddc<D: Ddc>(&mut self, ddc: &mut D) -> Result<(), D::Error> {
         if self.mccs_version.is_none() {
             let version = ddc.get_vcp_feature(0xdf)?;
@@ -286,6 +312,9 @@ impl str::FromStr for Backend {
 }
 
 impl Backend {
+    /// Enumerate the possible backends.
+    ///
+    /// Backends not supported for the current platform will be excluded.
     pub fn values() -> &'static [Backend] {
         &[
             #[cfg(feature = "has-ddc-i2c")]
@@ -298,9 +327,12 @@ impl Backend {
     }
 }
 
+/// An active handle to a connected display.
 pub struct Display {
-    handle: Handle,
-    info: DisplayInfo,
+    /// The inner communication handle used for DDC commands.
+    pub handle: Handle,
+    /// Information about the connected display.
+    pub info: DisplayInfo,
     filled_caps: bool,
 }
 
@@ -363,17 +395,6 @@ impl Display {
         displays
     }
 
-    /// Retrieve the inner communication handle, which can be used for DDC
-    /// commands.
-    pub fn handle(&mut self) -> &mut Handle {
-        &mut self.handle
-    }
-
-    /// Information about the connected display.
-    pub fn info(&self) -> &DisplayInfo {
-        &self.info
-    }
-
     /// Updates the display info with data retrieved from the device's
     /// reported capabilities.
     pub fn update_capabilities(&mut self) -> Result<(), Error> {
@@ -411,6 +432,7 @@ pub enum Handle {
 }
 
 impl Handle {
+    /// Request and parse the display's capabilities string.
     pub fn capabilities(&mut self) -> Result<mccs::Capabilities, Error> {
         mccs_caps::parse_capabilities(&self.capabilities_string()?)
             .map_err(From::from)
