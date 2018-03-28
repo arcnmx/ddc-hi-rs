@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Query` enum in crate `ddc_hi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Query">
+
+    <title>ddc_hi::Query - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc enum">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Enum Query</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#variants">Variants</a><div class="sidebar-links"><a href="#variant.Any">Any</a><a href="#variant.Backend">Backend</a><a href="#variant.Id">Id</a><a href="#variant.ManufacturerId">ManufacturerId</a><a href="#variant.ModelName">ModelName</a><a href="#variant.SerialNumber">SerialNumber</a><a href="#variant.Or">Or</a><a href="#variant.And">And</a></div><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.matches">matches</a></div></div><p class='location'><a href='index.html'>ddc_hi</a></p><script>window.sidebarCurrent = {name: 'Query', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>ddc_hi</a>::<wbr><a class="enum" href=''>Query</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/ddc_hi/lib.rs.html#245-262' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Query {
+    Any,
+    Backend(<a class="enum" href="../ddc_hi/enum.Backend.html" title="enum ddc_hi::Backend">Backend</a>),
+    Id(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    ManufacturerId(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    ModelName(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    SerialNumber(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>),
+    Or(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../ddc_hi/enum.Query.html" title="enum ddc_hi::Query">Query</a>&gt;),
+    And(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../ddc_hi/enum.Query.html" title="enum ddc_hi::Query">Query</a>&gt;),
+}</pre><div class='docblock'><p>A query to filter out matching displays.</p>
+
+<p>Most comparisons must match the full string.</p>
+</div><h2 id='variants' class='variants small-section-header'>
+                   Variants<a href='#variants' class='anchor'></a></h2>
+<span id="variant.Any" class="variant small-section-header"><a href="#variant.Any" class="anchor field"></a><span id='Any.v' class='invisible'><code>Any</code></span></span><div class='docblock'><p>Matches any display</p>
+</div><span id="variant.Backend" class="variant small-section-header"><a href="#variant.Backend" class="anchor field"></a><span id='Backend.v' class='invisible'><code>Backend(<a class="enum" href="../ddc_hi/enum.Backend.html" title="enum ddc_hi::Backend">Backend</a>)</code></span></span><div class='docblock'><p>Matches a display on the given backend</p>
+</div><span id="variant.Id" class="variant small-section-header"><a href="#variant.Id" class="anchor field"></a><span id='Id.v' class='invisible'><code>Id(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Matches a display with the specified ID</p>
+</div><span id="variant.ManufacturerId" class="variant small-section-header"><a href="#variant.ManufacturerId" class="anchor field"></a><span id='ManufacturerId.v' class='invisible'><code>ManufacturerId(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Matches a display with the specified manufacturer</p>
+</div><span id="variant.ModelName" class="variant small-section-header"><a href="#variant.ModelName" class="anchor field"></a><span id='ModelName.v' class='invisible'><code>ModelName(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Matches a display with the specified model name</p>
+</div><span id="variant.SerialNumber" class="variant small-section-header"><a href="#variant.SerialNumber" class="anchor field"></a><span id='SerialNumber.v' class='invisible'><code>SerialNumber(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></span></span><div class='docblock'><p>Matches a display with the specified serial number</p>
+</div><span id="variant.Or" class="variant small-section-header"><a href="#variant.Or" class="anchor field"></a><span id='Or.v' class='invisible'><code>Or(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../ddc_hi/enum.Query.html" title="enum ddc_hi::Query">Query</a>&gt;)</code></span></span><div class='docblock'><p>At least one of the queries must match</p>
+</div><span id="variant.And" class="variant small-section-header"><a href="#variant.And" class="anchor field"></a><span id='And.v' class='invisible'><code>And(<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="enum" href="../ddc_hi/enum.Query.html" title="enum ddc_hi::Query">Query</a>&gt;)</code></span></span><div class='docblock'><p>All of the queries must match</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="enum" href="../ddc_hi/enum.Query.html" title="enum ddc_hi::Query">Query</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#264-278' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.matches' class="method"><span id='matches.v' class='invisible'><code>pub fn <a href='#method.matches' class='fnname'>matches</a>(&amp;self, info: &amp;<a class="struct" href="../ddc_hi/struct.DisplayInfo.html" title="struct ddc_hi::DisplayInfo">DisplayInfo</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#266-277' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Queries whether the provided display info is a match.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ddc_hi";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

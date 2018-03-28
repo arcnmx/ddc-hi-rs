@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `DdcHost` trait in crate `ddc_hi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, DdcHost">
+
+    <title>ddc_hi::DdcHost - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc trait">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Trait DdcHost</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#associated-types">Associated Types</a><div class="sidebar-links"><a href="#associatedtype.Error">Error</a></div><a class="sidebar-title" href="#provided-methods">Provided Methods</a><div class="sidebar-links"><a href="#method.sleep">sleep</a></div><a class="sidebar-title" href="#foreign-impls">Implementations on Foreign Types</a><div class="sidebar-links"><a href="#impl-DdcHost">I2cDdc&lt;I&gt;</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='index.html'>ddc_hi</a></p><script>window.sidebarCurrent = {name: 'DdcHost', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>ddc_hi</a>::<wbr><a class="trait" href=''>DdcHost</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='http://arcnmx.github.io/ddc-rs/src/ddc/lib.rs.html#57-72' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait DdcHost {
+    type <a href='#associatedtype.Error' class="type">Error</a>;
+    fn <a href='#method.sleep' class='fnname'>sleep</a>(&amp;mut self) { ... }
+}</pre><div class='docblock'><p>A DDC host is able to communicate with a DDC device such as a display.</p>
+</div>
+            <h2 id='associated-types' class='small-section-header'>
+              Associated Types<a href='#associated-types' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='associatedtype.Error' class='method'><span id='Error.t' class='invisible'><code>type <a href='#associatedtype.Error' class="type">Error</a></code></span></h3><div class='docblock'><p>An error that can occur when communicating with a DDC device.</p>
+
+<p>Usually impls <code>From&lt;ErrorCode&gt;</code>.</p>
+</div></div>
+            <h2 id='provided-methods' class='small-section-header'>
+              Provided Methods<a href='#provided-methods' class='anchor'></a>
+            </h2>
+            <div class='methods'>
+        <h3 id='method.sleep' class='method'><span id='sleep.v' class='invisible'><code>fn <a href='#method.sleep' class='fnname'>sleep</a>(&amp;mut self)</code></span></h3><div class='docblock'><p>Wait for any previous commands to complete.</p>
+
+<p>The DDC specification defines delay intervals that must occur between
+execution of two subsequent commands, this waits for the amount of time
+remaining since the last command was executed. This is normally done
+internally and shouldn&#39;t need to be called manually unless synchronizing
+with an external process or another handle to the same device. It may
+however be desireable to run this before program exit.</p>
+</div></div>
+                <h2 id='foreign-impls' class='small-section-header'>
+                  Implementations on Foreign Types<a href='#foreign-impls' class='anchor'></a>
+                </h2>
+            <h3 id='impl-DdcHost' class='impl'><span class='in-band'><code>impl&lt;I&gt; <a class="trait" href="../ddc_hi/trait.DdcHost.html" title="trait ddc_hi::DdcHost">DdcHost</a> for <a class="struct" href="http://arcnmx.github.io/ddc-i2c-rs/ddc_i2c/struct.I2cDdc.html" title="struct ddc_i2c::I2cDdc">I2cDdc</a>&lt;I&gt; <span class="where fmt-newline">where<br>&nbsp;&nbsp;&nbsp;&nbsp;I: <a class="trait" href="http://arcnmx.github.io/i2c-rs/i2c/trait.Master.html" title="trait i2c::Master">Master</a>,&nbsp;</span></code><a href='#impl-DdcHost' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='http://arcnmx.github.io/ddc-i2c-rs/src/ddc_i2c/lib.rs.html#145-151' title='goto source code'>[src]</a></span></h3>
+<span class='docblock autohide'><div class='impl-items'><h4 id='associatedtype.Error-1' class="type"><span id='Error.t-1' class='invisible'><code>type <a href='#associatedtype.Error' class="type">Error</a> = <a class="enum" href="http://arcnmx.github.io/ddc-i2c-rs/ddc_i2c/enum.Error.html" title="enum ddc_i2c::Error">Error</a>&lt;&lt;I as <a class="trait" href="http://arcnmx.github.io/i2c-rs/i2c/trait.Master.html" title="trait i2c::Master">Master</a>&gt;::<a class="type" href="http://arcnmx.github.io/i2c-rs/i2c/trait.Master.html#associatedtype.Error" title="type i2c::Master::Error">Error</a>&gt;</code></span></h4>
+<h4 id='method.sleep-1' class="method"><span id='sleep.v-1' class='invisible'><code>fn <a href='#method.sleep' class='fnname'>sleep</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='http://arcnmx.github.io/ddc-i2c-rs/src/ddc_i2c/lib.rs.html#148-150' title='goto source code'>[src]</a></span></h4>
+</div></span>
+        <h2 id='implementors' class='small-section-header'>
+          Implementors<a href='#implementors' class='anchor'></a>
+        </h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><div class='out-of-band'><a class='srclink' href='../src/ddc_hi/lib.rs.html#442-453' title='goto source code'>[src]</a></div><code>impl DdcHost for <a class="enum" href="../ddc_hi/enum.Handle.html" title="enum ddc_hi::Handle">Handle</a><span class="where fmt-newline">  type <a href='#associatedtype.Error' class="type">Error</a> = Error;</span></code></li>
+</ul><script type="text/javascript" async
+                         src="../implementors/ddc/trait.DdcHost.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ddc_hi";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

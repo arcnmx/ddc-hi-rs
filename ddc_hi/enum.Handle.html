@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Handle` enum in crate `ddc_hi`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Handle">
+
+    <title>ddc_hi::Handle - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc enum">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <div class="sidebar-menu">&#9776;</div>
+        
+        <p class='location'>Enum Handle</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#methods">Methods</a><div class="sidebar-links"><a href="#method.capabilities">capabilities</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-DdcHost">DdcHost</a><a href="#impl-Ddc">Ddc</a><a href="#impl-DdcTable">DdcTable</a></div></div><p class='location'><a href='index.html'>ddc_hi</a></p><script>window.sidebarCurrent = {name: 'Handle', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script></div>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>ddc_hi</a>::<wbr><a class="enum" href=''>Handle</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../src/ddc_hi/lib.rs.html#424-432' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Handle {
+    // some variants omitted
+}</pre><div class='docblock'><p>A handle allowing communication with a display</p>
+</div>
+                    <h2 id='methods' class='small-section-header'>
+                      Methods<a href='#methods' class='anchor'></a>
+                    </h2>
+                <h3 id='impl' class='impl'><span class='in-band'><code>impl <a class="enum" href="../ddc_hi/enum.Handle.html" title="enum ddc_hi::Handle">Handle</a></code><a href='#impl' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#434-440' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.capabilities' class="method"><span id='capabilities.v' class='invisible'><code>pub fn <a href='#method.capabilities' class='fnname'>capabilities</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="http://arcnmx.github.io/mccs-rs/mccs/struct.Capabilities.html" title="struct mccs::Capabilities">Capabilities</a>, Error&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#436-439' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Request and parse the display&#39;s capabilities string.</p>
+</div></div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-DdcHost' class='impl'><span class='in-band'><code>impl <a class="trait" href="../ddc_hi/trait.DdcHost.html" title="trait ddc_hi::DdcHost">DdcHost</a> for <a class="enum" href="../ddc_hi/enum.Handle.html" title="enum ddc_hi::Handle">Handle</a></code><a href='#impl-DdcHost' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#442-453' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Error' class="type"><span id='Error.t' class='invisible'><code>type <a href='../ddc_hi/trait.DdcHost.html#associatedtype.Error' class="type">Error</a> = Error</code></span></h4>
+<div class='docblock'><p>An error that can occur when communicating with a DDC device. <a href="../ddc_hi/trait.DdcHost.html#associatedtype.Error">Read more</a></p>
+</div><h4 id='method.sleep' class="method"><span id='sleep.v' class='invisible'><code>fn <a href='../ddc_hi/trait.DdcHost.html#method.sleep' class='fnname'>sleep</a>(&amp;mut self)</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#445-452' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Wait for any previous commands to complete. <a href="../ddc_hi/trait.DdcHost.html#method.sleep">Read more</a></p>
+</div></div><h3 id='impl-Ddc' class='impl'><span class='in-band'><code>impl <a class="trait" href="../ddc_hi/trait.Ddc.html" title="trait ddc_hi::Ddc">Ddc</a> for <a class="enum" href="../ddc_hi/enum.Handle.html" title="enum ddc_hi::Handle">Handle</a></code><a href='#impl-Ddc' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#455-500' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.capabilities_string' class="method"><span id='capabilities_string.v' class='invisible'><code>fn <a href='../ddc_hi/trait.Ddc.html#tymethod.capabilities_string' class='fnname'>capabilities_string</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#456-463' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Retrieve the capability string from the device. <a href="../ddc_hi/trait.Ddc.html#tymethod.capabilities_string">Read more</a></p>
+</div><h4 id='method.get_vcp_feature' class="method"><span id='get_vcp_feature.v' class='invisible'><code>fn <a href='../ddc_hi/trait.Ddc.html#tymethod.get_vcp_feature' class='fnname'>get_vcp_feature</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;code: <a class="type" href="../ddc_hi/type.FeatureCode.html" title="type ddc_hi::FeatureCode">FeatureCode</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../ddc_hi/struct.VcpValue.html" title="struct ddc_hi::VcpValue">VcpValue</a>, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#465-472' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Gets the current value of an MCCS VCP feature.</p>
+</div><h4 id='method.set_vcp_feature' class="method"><span id='set_vcp_feature.v' class='invisible'><code>fn <a href='../ddc_hi/trait.Ddc.html#tymethod.set_vcp_feature' class='fnname'>set_vcp_feature</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;code: <a class="type" href="../ddc_hi/type.FeatureCode.html" title="type ddc_hi::FeatureCode">FeatureCode</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;value: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#474-481' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Sets a VCP feature to the specified value.</p>
+</div><h4 id='method.save_current_settings' class="method"><span id='save_current_settings.v' class='invisible'><code>fn <a href='../ddc_hi/trait.Ddc.html#tymethod.save_current_settings' class='fnname'>save_current_settings</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#483-490' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Instructs the device to save its current settings.</p>
+</div><h4 id='method.get_timing_report' class="method"><span id='get_timing_report.v' class='invisible'><code>fn <a href='../ddc_hi/trait.Ddc.html#tymethod.get_timing_report' class='fnname'>get_timing_report</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../ddc_hi/struct.TimingMessage.html" title="struct ddc_hi::TimingMessage">TimingMessage</a>, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#492-499' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Retrieves a timing report from the device.</p>
+</div></div><h3 id='impl-DdcTable' class='impl'><span class='in-band'><code>impl <a class="trait" href="../ddc_hi/trait.DdcTable.html" title="trait ddc_hi::DdcTable">DdcTable</a> for <a class="enum" href="../ddc_hi/enum.Handle.html" title="enum ddc_hi::Handle">Handle</a></code><a href='#impl-DdcTable' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#502-522' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.table_read' class="method"><span id='table_read.v' class='invisible'><code>fn <a href='../ddc_hi/trait.DdcTable.html#tymethod.table_read' class='fnname'>table_read</a>(&amp;mut self, code: <a class="type" href="../ddc_hi/type.FeatureCode.html" title="type ddc_hi::FeatureCode">FeatureCode</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#503-511' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Read a table value from the device.</p>
+</div><h4 id='method.table_write' class="method"><span id='table_write.v' class='invisible'><code>fn <a href='../ddc_hi/trait.DdcTable.html#tymethod.table_write' class='fnname'>table_write</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;code: <a class="type" href="../ddc_hi/type.FeatureCode.html" title="type ddc_hi::FeatureCode">FeatureCode</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;offset: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;value: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">&amp;[</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.slice.html">]</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, Self::<a class="type" href="../ddc_hi/trait.DdcHost.html#associatedtype.Error" title="type ddc_hi::DdcHost::Error">Error</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../src/ddc_hi/lib.rs.html#513-521' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Write a table value to the device.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ddc_hi";
+    </script>
+    <script src="../main.js"></script>
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
