@@ -10,8 +10,11 @@
     <title>lib.rs.html -- source</title>
 
     <link rel="stylesheet" type="text/css" href="../../normalize.css">
-    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../../main.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle">
+    
+    <link rel="stylesheet" type="text/css" href="../../dark.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css" id="themeStyle">
+    <script src="../../storage.js"></script>
     
 
     
@@ -33,6 +36,13 @@
         
     </nav>
 
+    <div class="theme-picker">
+        <button id="theme-picker" aria-label="Pick another theme!">
+            <img src="../../brush.svg" width="18" alt="Pick another theme!">
+        </button>
+        <div id="theme-choices"></div>
+    </div>
+    <script src="../../theme.js"></script>
     <nav class="sub">
         <form class="search-form js-only">
             <div class="search-container">
@@ -611,6 +621,7 @@
 <span id="565">565</span>
 <span id="566">566</span>
 <span id="567">567</span>
+<span id="568">568</span>
 </pre><pre class="rust ">
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#![<span class="ident">doc</span>(<span class="ident">html_root_url</span> <span class="op">=</span> <span class="string">&quot;http://arcnmx.github.io/ddc-hi-rs/&quot;</span>)]</span>
@@ -1010,7 +1021,8 @@
                         <span class="kw">let</span> <span class="ident">id_prefix</span> <span class="op">=</span> <span class="ident">gpu</span>.<span class="ident">short_name</span>().<span class="ident">unwrap_or</span>(<span class="string">&quot;NVAPI&quot;</span>.<span class="ident">into</span>());
                         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">ids</span>) <span class="op">=</span> <span class="ident">gpu</span>.<span class="ident">display_ids_connected</span>(<span class="ident">nvapi</span>::<span class="ident">ConnectedIdsFlags</span>::<span class="ident">empty</span>()) {
                             <span class="kw">for</span> <span class="ident">id</span> <span class="kw">in</span> <span class="ident">ids</span> {
-                                <span class="kw">let</span> <span class="ident">i2c</span> <span class="op">=</span> <span class="ident">nvapi</span>::<span class="ident">I2c</span>::<span class="ident">new</span>(<span class="ident">gpu</span>.<span class="ident">clone</span>(), <span class="ident">id</span>.<span class="ident">display_id</span>); <span class="comment">// TODO: it says mask, is it actually `1&lt;&lt;display_id` instead?</span>
+                                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i2c</span> <span class="op">=</span> <span class="ident">nvapi</span>::<span class="ident">I2c</span>::<span class="ident">new</span>(<span class="ident">gpu</span>.<span class="ident">clone</span>(), <span class="ident">id</span>.<span class="ident">display_id</span>); <span class="comment">// TODO: it says mask, is it actually `1&lt;&lt;display_id` instead?</span>
+                                <span class="ident">i2c</span>.<span class="ident">set_port</span>(<span class="prelude-val">None</span>, <span class="bool-val">true</span>); <span class="comment">// TODO: port=Some(1) instead? docs seem to indicate it&#39;s not optional, but the one example I can find keeps it unset so...</span>
                                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ddc</span> <span class="op">=</span> <span class="ident">ddc_i2c</span>::<span class="ident">I2cDdc</span>::<span class="ident">new</span>(<span class="ident">i2c</span>);
 
                                 <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}:{:?}&quot;</span>, <span class="ident">id_prefix</span>, <span class="ident">id</span>.<span class="ident">display_id</span>, <span class="ident">id</span>.<span class="ident">connector</span>);
@@ -1193,20 +1205,22 @@
                 <h2>Keyboard Shortcuts</h2>
 
                 <dl>
-                    <dt>?</dt>
+                    <dt><kbd>?</kbd></dt>
                     <dd>Show this help dialog</dd>
-                    <dt>S</dt>
+                    <dt><kbd>S</kbd></dt>
                     <dd>Focus the search field</dd>
-                    <dt>↑</dt>
+                    <dt><kbd>↑</kbd></dt>
                     <dd>Move up in search results</dd>
-                    <dt>↓</dt>
+                    <dt><kbd>↓</kbd></dt>
                     <dd>Move down in search results</dd>
-                    <dt>↹</dt>
+                    <dt><kbd>↹</kbd></dt>
                     <dd>Switch tab</dd>
-                    <dt>&#9166;</dt>
+                    <dt><kbd>&#9166;</kbd></dt>
                     <dd>Go to active search result</dd>
-                    <dt style="width:31px;">+ / -</dt>
-                    <dd>Collapse/expand all sections</dd>
+                    <dt><kbd>+</kbd></dt>
+                    <dd>Expand all sections</dd>
+                    <dt><kbd>-</kbd></dt>
+                    <dd>Collapse all sections</dd>
                 </dl>
             </div>
 
