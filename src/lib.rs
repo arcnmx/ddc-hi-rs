@@ -396,7 +396,8 @@ impl Display {
                         let id_prefix = gpu.short_name().unwrap_or("NVAPI".into());
                         if let Ok(ids) = gpu.display_ids_connected(nvapi::ConnectedIdsFlags::empty()) {
                             for id in ids {
-                                let i2c = nvapi::I2c::new(gpu.clone(), id.display_id); // TODO: it says mask, is it actually `1<<display_id` instead?
+                                let mut i2c = nvapi::I2c::new(gpu.clone(), id.display_id); // TODO: it says mask, is it actually `1<<display_id` instead?
+                                i2c.set_port(None, true); // TODO: port=Some(1) instead? docs seem to indicate it's not optional, but the one example I can find keeps it unset so...
                                 let mut ddc = ddc_i2c::I2cDdc::new(i2c);
 
                                 let id = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
