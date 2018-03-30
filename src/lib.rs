@@ -228,7 +228,7 @@ impl DisplayInfo {
     pub fn update_from_ddc<D: Ddc>(&mut self, ddc: &mut D) -> Result<(), D::Error> {
         if self.mccs_version.is_none() {
             let version = ddc.get_vcp_feature(0xdf)?;
-            let version = mccs::Version::new(version.mh, version.ml);
+            let version = mccs::Version::new(version.sh, version.sl);
             if version != mccs::Version::default() {
                 self.mccs_version = Some(version);
                 self.mccs_database = mccs_db::Database::from_version(&version);
