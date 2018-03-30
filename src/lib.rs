@@ -406,10 +406,15 @@ impl Display {
                             for id in ids {
                                 let mut i2c = nvapi::I2c::new(gpu.clone(), id.display_id); // TODO: it says mask, is it actually `1<<display_id` instead?
                                 i2c.set_port(None, true); // TODO: port=Some(1) instead? docs seem to indicate it's not optional, but the one example I can find keeps it unset so...
+
+                                // hack around broken nvidia drivers, the register argument doesn't seem to work at all so write the edid eeprom offset here first
+                                i2c.set_address(0x50);
+                                let _ = i2c.nvapi_write(&[], &[0]);
+
                                 let mut ddc = ddc_i2c::I2cDdc::new(i2c);
 
                                 let id = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
-                                let mut edid = vec![0u8; 0x100];
+                                let mut edid = vec![0u8; 0x80]; // 0x100
                                 if let Ok(ddc) = ddc.read_edid(0, &mut edid)
                                     .map_err(Error::from)
                                     .and_then(|_| DisplayInfo::from_edid(Backend::Nvapi, id, edid)
@@ -424,7 +429,6 @@ impl Display {
                         }
                     }
                 }
-                // TODO: this
             }
         }
 
