@@ -23,6 +23,7 @@ mccs = "^0.1.0"
 mccs-caps = "^0.1.0"
 mccs-db = "^0.1.1"
 failure = "^0.1.1"
+log = "^0.4.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ddc-i2c = { version = "^0.2.1", features = ["with-linux", "with-linux-enumerate"], optional = true }

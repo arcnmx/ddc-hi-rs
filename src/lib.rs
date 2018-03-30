@@ -27,6 +27,8 @@ extern crate mccs;
 extern crate mccs_caps;
 extern crate mccs_db;
 extern crate failure;
+#[macro_use]
+extern crate log;
 #[cfg(feature = "ddc-i2c")]
 extern crate ddc_i2c;
 #[cfg(feature = "has-ddc-winapi")]
@@ -100,6 +102,8 @@ impl DisplayInfo {
     ///
     /// May fail to parse the EDID data.
     pub fn from_edid(backend: Backend, id: String, edid_data: Vec<u8>) -> io::Result<Self> {
+        trace!("DisplayInfo::from_edid({:?}, {})", backend, id);
+
         let edid = edid::parse(&edid_data).to_result()
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
 
@@ -133,6 +137,8 @@ impl DisplayInfo {
 
     /// Create a new `DisplayInfo` from parsed capabilities.
     pub fn from_capabilities(backend: Backend, id: String, caps: &mccs::Capabilities) -> Self {
+        trace!("DisplayInfo::from_capabilities({:?}, {})", backend, id);
+
         let edid = if let Some(ref edid) = caps.edid {
             // TODO: return Result here? warn!()?
             Self::from_edid(backend, id.clone(), edid.clone()).map_err(drop)
@@ -227,6 +233,8 @@ impl DisplayInfo {
     /// string.
     pub fn update_from_ddc<D: Ddc>(&mut self, ddc: &mut D) -> Result<(), D::Error> {
         if self.mccs_version.is_none() {
+            trace!("DisplayInfo::update_from_ddc");
+
             let version = ddc.get_vcp_feature(0xdf)?;
             let version = mccs::Version::new(version.sh, version.sl);
             if version != mccs::Version::default() {
