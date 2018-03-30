@@ -622,6 +622,18 @@
 <span id="566">566</span>
 <span id="567">567</span>
 <span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
 </pre><pre class="rust ">
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="attribute">#![<span class="ident">doc</span>(<span class="ident">html_root_url</span> <span class="op">=</span> <span class="string">&quot;http://arcnmx.github.io/ddc-hi-rs/&quot;</span>)]</span>
@@ -652,6 +664,8 @@
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">mccs_caps</span>;
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">mccs_db</span>;
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">failure</span>;
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">log</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;ddc-i2c&quot;</span>)]</span>
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">ddc_i2c</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;has-ddc-winapi&quot;</span>)]</span>
@@ -725,6 +739,8 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// May fail to parse the EDID data.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_edid</span>(<span class="ident">backend</span>: <span class="ident">Backend</span>, <span class="ident">id</span>: <span class="ident">String</span>, <span class="ident">edid_data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;DisplayInfo::from_edid({:?}, {})&quot;</span>, <span class="ident">backend</span>, <span class="ident">id</span>);
+
         <span class="kw">let</span> <span class="ident">edid</span> <span class="op">=</span> <span class="ident">edid</span>::<span class="ident">parse</span>(<span class="kw-2">&amp;</span><span class="ident">edid_data</span>).<span class="ident">to_result</span>()
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">io</span>::<span class="ident">Error</span>::<span class="ident">new</span>(<span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">InvalidData</span>, <span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
 
@@ -758,6 +774,8 @@
 
     <span class="doccomment">/// Create a new `DisplayInfo` from parsed capabilities.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_capabilities</span>(<span class="ident">backend</span>: <span class="ident">Backend</span>, <span class="ident">id</span>: <span class="ident">String</span>, <span class="ident">caps</span>: <span class="kw-2">&amp;</span><span class="ident">mccs</span>::<span class="ident">Capabilities</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+        <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;DisplayInfo::from_capabilities({:?}, {})&quot;</span>, <span class="ident">backend</span>, <span class="ident">id</span>);
+
         <span class="kw">let</span> <span class="ident">edid</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">edid</span>) <span class="op">=</span> <span class="ident">caps</span>.<span class="ident">edid</span> {
             <span class="comment">// TODO: return Result here? warn!()?</span>
             <span class="self">Self</span>::<span class="ident">from_edid</span>(<span class="ident">backend</span>, <span class="ident">id</span>.<span class="ident">clone</span>(), <span class="ident">edid</span>.<span class="ident">clone</span>()).<span class="ident">map_err</span>(<span class="ident">drop</span>)
@@ -852,6 +870,8 @@
     <span class="doccomment">/// string.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update_from_ddc</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Ddc</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ddc</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">D</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">D</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">mccs_version</span>.<span class="ident">is_none</span>() {
+            <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;DisplayInfo::update_from_ddc&quot;</span>);
+
             <span class="kw">let</span> <span class="ident">version</span> <span class="op">=</span> <span class="ident">ddc</span>.<span class="ident">get_vcp_feature</span>(<span class="number">0xdf</span>)<span class="question-mark">?</span>;
             <span class="kw">let</span> <span class="ident">version</span> <span class="op">=</span> <span class="ident">mccs</span>::<span class="ident">Version</span>::<span class="ident">new</span>(<span class="ident">version</span>.<span class="ident">sh</span>, <span class="ident">version</span>.<span class="ident">sl</span>);
             <span class="kw">if</span> <span class="ident">version</span> <span class="op">!=</span> <span class="ident">mccs</span>::<span class="ident">Version</span>::<span class="ident">default</span>() {
@@ -1023,10 +1043,15 @@
                             <span class="kw">for</span> <span class="ident">id</span> <span class="kw">in</span> <span class="ident">ids</span> {
                                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i2c</span> <span class="op">=</span> <span class="ident">nvapi</span>::<span class="ident">I2c</span>::<span class="ident">new</span>(<span class="ident">gpu</span>.<span class="ident">clone</span>(), <span class="ident">id</span>.<span class="ident">display_id</span>); <span class="comment">// TODO: it says mask, is it actually `1&lt;&lt;display_id` instead?</span>
                                 <span class="ident">i2c</span>.<span class="ident">set_port</span>(<span class="prelude-val">None</span>, <span class="bool-val">true</span>); <span class="comment">// TODO: port=Some(1) instead? docs seem to indicate it&#39;s not optional, but the one example I can find keeps it unset so...</span>
+
+                                <span class="comment">// hack around broken nvidia drivers, the register argument doesn&#39;t seem to work at all so write the edid eeprom offset here first</span>
+                                <span class="ident">i2c</span>.<span class="ident">set_address</span>(<span class="number">0x50</span>);
+                                <span class="kw">let</span> _ <span class="op">=</span> <span class="ident">i2c</span>.<span class="ident">nvapi_write</span>(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[<span class="number">0</span>]);
+
                                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ddc</span> <span class="op">=</span> <span class="ident">ddc_i2c</span>::<span class="ident">I2cDdc</span>::<span class="ident">new</span>(<span class="ident">i2c</span>);
 
                                 <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}/{}:{:?}&quot;</span>, <span class="ident">id_prefix</span>, <span class="ident">id</span>.<span class="ident">display_id</span>, <span class="ident">id</span>.<span class="ident">connector</span>);
-                                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">edid</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="number">0u8</span>; <span class="number">0x100</span>];
+                                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">edid</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="number">0u8</span>; <span class="number">0x80</span>]; <span class="comment">// 0x100</span>
                                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">ddc</span>) <span class="op">=</span> <span class="ident">ddc</span>.<span class="ident">read_edid</span>(<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">edid</span>)
                                     .<span class="ident">map_err</span>(<span class="ident">Error</span>::<span class="ident">from</span>)
                                     .<span class="ident">and_then</span>(<span class="op">|</span>_<span class="op">|</span> <span class="ident">DisplayInfo</span>::<span class="ident">from_edid</span>(<span class="ident">Backend</span>::<span class="ident">Nvapi</span>, <span class="ident">id</span>, <span class="ident">edid</span>)
@@ -1041,7 +1066,6 @@
                         }
                     }
                 }
-                <span class="comment">// TODO: this</span>
             }
         }
 
