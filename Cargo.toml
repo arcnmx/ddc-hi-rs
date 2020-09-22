@@ -18,7 +18,7 @@ maintenance = { status = "passively-maintained" }
 
 [dependencies]
 ddc = "^0.2.0"
-edid = "^0.2.0"
+edid = "^0.3.0"
 mccs = "^0.1.0"
 mccs-caps = "^0.1.0"
 mccs-db = "^0.1.1"
