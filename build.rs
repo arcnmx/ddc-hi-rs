@@ -9,7 +9,11 @@ fn emit_feature(name: &str) {
 }
 
 fn main() {
-    if var("CARGO_CFG_UNIX").is_ok() {
+    if var("CARGO_CFG_TARGET_OS") == Ok("macos".into()) {
+        if feature_enabled("ddc-macos") {
+            emit_feature("has-ddc-macos");
+        }
+    } else if var("CARGO_CFG_UNIX").is_ok() {
         if feature_enabled("ddc-i2c") {
             emit_feature("has-ddc-i2c");
         }
