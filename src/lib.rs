@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![doc(html_root_url = "http://arcnmx.github.io/ddc-hi-rs/")]
+#![doc(html_root_url = "http://docs.rs/ddc-hi-rs/0.2.0")]
 
 //! High level DDC/CI monitor controls.
 //!

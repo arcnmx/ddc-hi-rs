@@ -1,13 +1,13 @@
 [package]
 name = "ddc-hi"
-version = "0.1.3"
+version = "0.2.0"
 authors = ["arcnmx"]
 build = "build.rs"
 
 description = "High level DDC/CI monitor control"
 keywords = ["ddc", "mccs", "vcp", "vesa"]
 
-documentation = "http://arcnmx.github.io/ddc-hi-rs/ddc_hi"
+documentation = "http://docs.rs/ddc-hi/"
 repository = "https://github.com/arcnmx/ddc-hi-rs"
 readme = "README.md"
 license = "MIT"
