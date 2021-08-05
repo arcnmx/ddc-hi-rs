@@ -23,7 +23,7 @@
 
 use std::{io, fmt, str};
 use std::iter::FromIterator;
-use anyhow::Error;
+use anyhow::{Error, Context};
 use ddc::Edid;
 use log::{warn, trace};
 
@@ -378,10 +378,12 @@ impl Display {
             if let Ok(devs) = ddc_i2c::I2cDeviceEnumerator::new() {
                 displays.extend(devs
                     .map(|mut ddc| -> Result<_, Error> {
+                        let id = ddc.inner_ref().inner_ref().metadata().map(|meta| meta.rdev()).unwrap_or(Default::default());
                         let mut edid = vec![0u8; 0x100];
-                        ddc.read_edid(0, &mut edid)?;
-                        let id = ddc.inner_ref().inner_ref().metadata().map(|meta| meta.rdev().to_string()).unwrap_or(Default::default());
-                        let info = DisplayInfo::from_edid(Backend::I2cDevice, id, edid)?;
+                        ddc.read_edid(0, &mut edid)
+                            .with_context(|| format!("Failed to read EDID for i2c-{}", id))?;
+                        let info = DisplayInfo::from_edid(Backend::I2cDevice, id.to_string(), edid)
+                            .with_context(|| format!("Failed to parse EDID for i2c-{}", id))?;
                         Ok(Display::new(
                             Handle::I2cDevice(ddc),
                             info,
@@ -449,17 +451,21 @@ impl Display {
 
                                 let mut ddc = ddc_i2c::I2cDdc::new(i2c);
 
-                                let id = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
+                                let idstr = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
                                 let mut edid = vec![0u8; 0x80]; // 0x100
-                                if let Ok(ddc) = ddc.read_edid(0, &mut edid)
-                                    .map_err(Error::from)
-                                    .and_then(|_| DisplayInfo::from_edid(Backend::Nvapi, id, edid)
-                                        .map_err(Error::from)
+                                let res = ddc.read_edid(0, &mut edid)
+                                    .context("Failed to read EDID")
+                                    .and_then(|_| DisplayInfo::from_edid(Backend::Nvapi, idstr, edid)
+                                        .context("Failed to parse EDID")
                                     ).map(|info| Display::new(
                                         Handle::Nvapi(ddc),
                                         info,
-                                    )) {
-                                    displays.push(ddc);
+                                    ));
+                                match ddc {
+                                    Ok(ddc) =>
+                                        displays.push(ddc),
+                                    Err(e) =>
+                                        warn!("Failed to enumerate NVAPI display {}/{}:{:?}: {}", id_prefix, id.display_id, id.connector, e),
                                 }
                             }
                         }
@@ -515,8 +521,9 @@ pub enum Handle {
 impl Handle {
     /// Request and parse the display's capabilities string.
     pub fn capabilities(&mut self) -> Result<mccs::Capabilities, Error> {
-        mccs_caps::parse_capabilities(&self.capabilities_string()?)
-            .map_err(From::from)
+        mccs_caps::parse_capabilities(
+            &self.capabilities_string().context("Failed to read capabilities string")?
+        ).context("Failed to parse MCCS capabilities")
     }
 }
 
