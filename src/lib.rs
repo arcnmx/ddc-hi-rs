@@ -21,27 +21,11 @@
 //! }
 //! ```
 
-extern crate ddc;
-extern crate edid;
-extern crate mccs;
-extern crate mccs_caps;
-extern crate mccs_db;
-extern crate anyhow;
-#[macro_use]
-extern crate log;
-#[cfg(feature = "has-ddc-i2c")]
-extern crate ddc_i2c;
-#[cfg(feature = "has-ddc-winapi")]
-extern crate ddc_winapi;
-#[cfg(feature = "has-nvapi")]
-extern crate nvapi;
-#[cfg(feature = "has-ddc-macos")]
-extern crate ddc_macos;
-
 use std::{io, fmt, str};
 use std::iter::FromIterator;
 use anyhow::Error;
 use ddc::Edid;
+use log::trace;
 
 pub use ddc::{Ddc, DdcTable, DdcHost, FeatureCode, VcpValue, VcpValueType, TimingMessage};
 
@@ -84,8 +68,8 @@ impl DisplayInfo {
     /// Create an empty `DisplayInfo`.
     pub fn new(backend: Backend, id: String) -> Self {
         DisplayInfo {
-            backend: backend,
-            id: id,
+            backend,
+            id,
             manufacturer_id: None,
             model_id: None,
             version: None,
@@ -121,8 +105,8 @@ impl DisplayInfo {
         }
 
         Ok(DisplayInfo {
-            backend: backend,
-            id: id,
+            backend,
+            id,
             edid_data: Some(edid_data),
             manufacturer_id: Some(String::from_iter(edid.header.vendor.iter())),
             model_id: Some(edid.header.product),
@@ -130,8 +114,8 @@ impl DisplayInfo {
             version: Some((edid.header.version, edid.header.revision)),
             manufacture_year: Some(edid.header.year),
             manufacture_week: Some(edid.header.week),
-            model_name: model_name,
-            serial_number: serial_number,
+            model_name,
+            serial_number,
             mccs_version: None,
             mccs_database: Default::default(),
         })
@@ -149,8 +133,8 @@ impl DisplayInfo {
         };
 
         let mut res = DisplayInfo {
-            backend: backend,
-            id: id,
+            backend,
+            id,
             model_name: caps.model.clone(),
             mccs_version: caps.mccs_version.clone(),
             edid_data: caps.edid.clone(),
@@ -356,8 +340,8 @@ impl Display {
     /// Create a new display from the specified handle.
     pub fn new(handle: Handle, info: DisplayInfo) -> Self {
         Display {
-            handle: handle,
-            info: info,
+            handle,
+            info,
             filled_caps: false,
         }
     }

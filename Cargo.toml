@@ -3,6 +3,7 @@ name = "ddc-hi"
 version = "0.4.0"
 authors = ["arcnmx"]
 build = "build.rs"
+edition = "2018"
 
 description = "High level DDC/CI monitor control"
 keywords = ["ddc", "mccs", "vcp", "vesa"]
