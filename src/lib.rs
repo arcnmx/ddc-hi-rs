@@ -64,6 +64,24 @@ pub struct DisplayInfo {
     pub mccs_database: mccs_db::Database,
 }
 
+impl fmt::Display for DisplayInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.backend, self.id)?;
+
+        if let Some(s) = &self.manufacturer_id {
+            write!(f, " {}", s)?;
+        }
+
+        if let Some(s) = &self.model_name {
+            write!(f, " {}", s)?;
+        } else if let Some(s) = &self.model_id {
+            write!(f, " {}", s)?;
+        }
+
+        Ok(())
+    }
+}
+
 impl DisplayInfo {
     /// Create an empty `DisplayInfo`.
     pub fn new(backend: Backend, id: String) -> Self {
