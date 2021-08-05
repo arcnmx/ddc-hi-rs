@@ -26,7 +26,7 @@ extern crate edid;
 extern crate mccs;
 extern crate mccs_caps;
 extern crate mccs_db;
-extern crate failure;
+extern crate anyhow;
 #[macro_use]
 extern crate log;
 #[cfg(feature = "has-ddc-i2c")]
@@ -40,7 +40,7 @@ extern crate ddc_macos;
 
 use std::{io, fmt, str};
 use std::iter::FromIterator;
-use failure::Error;
+use anyhow::Error;
 use ddc::Edid;
 
 pub use ddc::{Ddc, DdcTable, DdcHost, FeatureCode, VcpValue, VcpValueType, TimingMessage};
