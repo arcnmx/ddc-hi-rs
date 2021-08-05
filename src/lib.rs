@@ -25,7 +25,7 @@ use std::{io, fmt, str};
 use std::iter::FromIterator;
 use anyhow::Error;
 use ddc::Edid;
-use log::trace;
+use log::{warn, trace};
 
 pub use ddc::{Ddc, DdcTable, DdcHost, FeatureCode, VcpValue, VcpValueType, TimingMessage};
 
@@ -143,12 +143,9 @@ impl DisplayInfo {
     pub fn from_capabilities(backend: Backend, id: String, caps: &mccs::Capabilities) -> Self {
         trace!("DisplayInfo::from_capabilities({:?}, {})", backend, id);
 
-        let edid = if let Some(ref edid) = caps.edid {
-            // TODO: return Result here? warn!()?
-            Self::from_edid(backend, id.clone(), edid.clone()).map_err(drop)
-        } else {
-            Err(())
-        };
+        let edid = caps.edid.clone().map(|edid|
+            Self::from_edid(backend, id.clone(), edid)
+        ).transpose();
 
         let mut res = DisplayInfo {
             backend,
@@ -172,9 +169,15 @@ impl DisplayInfo {
             res.mccs_database.apply_capabilities(caps);
         }
 
-        if let Ok(edid) = edid {
-            // TODO: should this be edid.update_from(&res) instead?
-            res.update_from(&edid);
+        match edid {
+            Ok(Some(edid)) => {
+                // TODO: should this be edid.update_from(&res) instead?
+                res.update_from(&edid);
+            },
+            Ok(None) => (),
+            Err(e) => {
+                warn!("Failed to parse edid from caps of {}: {}", res, e);
+            },
         }
 
         res
@@ -383,7 +386,13 @@ impl Display {
                             Handle::I2cDevice(ddc),
                             info,
                         ))
-                    }).filter_map(|d| d.ok())
+                    }).filter_map(|d| match d {
+                        Ok(v) => Some(v),
+                        Err(e) => {
+                            warn!("Failed to enumerate a display: {}", e);
+                            None
+                        },
+                    })
                 )
             }
         }
