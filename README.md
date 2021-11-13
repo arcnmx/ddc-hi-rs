@@ -1,6 +1,6 @@
 # ddc-hi
 
-[![travis-badge][]][travis] [![release-badge][]][cargo] [![docs-badge][]][docs] [![license-badge][]][license]
+[![release-badge][]][cargo] [![docs-badge][]][docs] [![license-badge][]][license]
 
 High level DDC/CI monitor controls.
 
@@ -8,8 +8,6 @@ High level DDC/CI monitor controls.
 
 See the [documentation][docs] for up to date information.
 
-[travis-badge]: https://img.shields.io/travis/arcnmx/ddc-hi-rs/master.svg?style=flat-square
-[travis]: https://travis-ci.org/arcnmx/ddc-hi-rs
 [release-badge]: https://img.shields.io/crates/v/ddc-hi.svg?style=flat-square
 [cargo]: https://crates.io/crates/ddc-hi
 [docs-badge]: https://img.shields.io/badge/API-docs-blue.svg?style=flat-square
