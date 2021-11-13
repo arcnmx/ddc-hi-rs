@@ -461,7 +461,7 @@ impl Display {
                                         Handle::Nvapi(ddc),
                                         info,
                                     ));
-                                match ddc {
+                                match res {
                                     Ok(ddc) =>
                                         displays.push(ddc),
                                     Err(e) =>
