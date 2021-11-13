@@ -17,6 +17,13 @@
     '';
     impure = true;
   };
+  test = channels.cipkgs.ci.command {
+    name = "cargo-test";
+    command = ''
+      nix-shell ${importShell} --run "cargo test"
+    '';
+    impure = true;
+  };
   build-windows = channels.cipkgs.ci.command {
     name = "cargo-build-windows";
     command = ''
@@ -39,7 +46,7 @@ in {
       };
     };
     tasks = {
-      build.inputs = singleton build;
+      build.inputs = [ build test ];
     };
     jobs = {
       nixos = {
