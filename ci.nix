@@ -65,9 +65,9 @@ in {
       type = types.unspecified;
       default = with pkgs; config.rustChannel.mkShell {
         buildInputs =
-          optional pkgs.hostPlatform.isLinux udev
-          ++ optional pkgs.hostPlatform.isDarwin libiconv;
-        nativeBuildInputs = optional pkgs.hostPlatform.isLinux pkg-config;
+          optional hostPlatform.isLinux udev
+          ++ optionals hostPlatform.isDarwin [ libiconv darwin.apple_sdk.frameworks.CoreGraphics ];
+        nativeBuildInputs = optional hostPlatform.isLinux pkg-config;
       };
     };
   };
