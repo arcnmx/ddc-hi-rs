@@ -21,13 +21,59 @@
 //! }
 //! ```
 
-use std::{io, fmt, str};
-use std::iter::FromIterator;
-use anyhow::{Error, Context};
 use ddc::Edid;
-use log::{warn, trace};
+use log::{trace, warn};
+use std::iter::FromIterator;
+use std::{fmt, io, str};
+use thiserror::Error;
 
-pub use ddc::{Ddc, DdcTable, DdcHost, FeatureCode, VcpValue, VcpValueType, TimingMessage};
+pub use ddc::{Ddc, DdcHost, DdcTable, FeatureCode, TimingMessage, VcpValue, VcpValueType};
+
+/// The error type for high level DDC/CI monitor operations.
+#[derive(Debug, Error)]
+pub enum Error {
+    /// Unsupported operation.
+    #[error("the backend does not support the operation")]
+    UnsupportedOp,
+
+    /// An error occurred while reading the capabilities.
+    #[error("failed to read capabilities string: {0}")]
+    CapabilitiesReadError(BackendError),
+
+    /// An error occurred while parsing MCCS capabilities.
+    #[error("failed to parse MCCS capabilities: {0}")]
+    CapabilitiesParseError(io::Error),
+
+    /// Low level errors.
+    #[error("low level error: {0}")]
+    LowLevelError(#[from] BackendError),
+}
+
+/// A wrapper for the DDC backend errors.
+#[derive(Debug, Error)]
+pub enum BackendError {
+    #[cfg(feature = "has-ddc-i2c")]
+    /// I2c error.
+    #[error("i2c error: {0}")]
+    I2cDeviceError(ddc_i2c::Error<io::Error>),
+
+    #[cfg(feature = "has-ddc-winapi")]
+    /// Windows API error.
+    #[error("winapi error: {0}")]
+    WinApiError(<ddc_winapi::Monitor as DdcHost>::Error),
+
+    #[cfg(feature = "has-ddc-macos")]
+    /// MacOS API error.
+    #[error("macOS API error: {0}")]
+    MacOsError(<ddc_macos::Monitor as DdcHost>::Error),
+
+    // NOTE: We use ddc-i2c instead of has-... because the latter actually means
+    // ddc-i2c enabled on a Unix platform.
+    #[cfg(all(feature = "has-nvapi", feature = "ddc-i2c"))]
+    /// Nvapi error.
+    #[error("nvapi error: {0}")]
+    NvapiError(ddc_i2c::Error<nvapi::Status>),
+}
 
 /// Identifying information about an attached display.
 ///
@@ -377,13 +423,13 @@ impl Display {
 
             if let Ok(devs) = ddc_i2c::I2cDeviceEnumerator::new() {
                 displays.extend(devs
-                    .map(|mut ddc| -> Result<_, Error> {
+                    .map(|mut ddc| -> Result<_, String> {
                         let id = ddc.inner_ref().inner_ref().metadata().map(|meta| meta.rdev()).unwrap_or(Default::default());
                         let mut edid = vec![0u8; 0x100];
                         ddc.read_edid(0, &mut edid)
-                            .with_context(|| format!("Failed to read EDID for i2c-{}", id))?;
+                            .map_err(|e| format!("failed to read EDID for i2c-{}: {}", id, e))?;
                         let info = DisplayInfo::from_edid(Backend::I2cDevice, id.to_string(), edid)
-                            .with_context(|| format!("Failed to parse EDID for i2c-{}", id))?;
+                            .map_err(|e| format!("failed to parse EDID for i2c-{}: {}", id, e))?;
                         Ok(Display::new(
                             Handle::I2cDevice(ddc),
                             info,
@@ -454,9 +500,9 @@ impl Display {
                                 let idstr = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
                                 let mut edid = vec![0u8; 0x80]; // 0x100
                                 let res = ddc.read_edid(0, &mut edid)
-                                    .context("Failed to read EDID")
+                                    .map_err(|e| format!("failed to read EDID: {}", e))
                                     .and_then(|_| DisplayInfo::from_edid(Backend::Nvapi, idstr, edid)
-                                        .context("Failed to parse EDID")
+                                        .map_err(|e| format!("failed to parse EDID: {}", e))
                                     ).map(|info| Display::new(
                                         Handle::Nvapi(ddc),
                                         info,
@@ -521,9 +567,8 @@ pub enum Handle {
 impl Handle {
     /// Request and parse the display's capabilities string.
     pub fn capabilities(&mut self) -> Result<mccs::Capabilities, Error> {
-        mccs_caps::parse_capabilities(
-            &self.capabilities_string().context("Failed to read capabilities string")?
-        ).context("Failed to parse MCCS capabilities")
+        mccs_caps::parse_capabilities(&self.capabilities_string()?)
+            .map_err(Error::CapabilitiesParseError)
     }
 }
 
@@ -548,66 +593,109 @@ impl Ddc for Handle {
     fn capabilities_string(&mut self) -> Result<Vec<u8>, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.capabilities_string().map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .capabilities_string()
+                .map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.capabilities_string().map_err(From::from),
+            Handle::WinApi(ref mut monitor) => monitor
+                .capabilities_string()
+                .map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut monitor) => monitor.capabilities_string().map_err(From::from),
+            Handle::MacOS(ref mut monitor) => monitor
+                .capabilities_string()
+                .map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.capabilities_string().map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => {
+                i2c.capabilities_string().map_err(BackendError::NvapiError)
+            }
         }
+        .map_err(Error::CapabilitiesReadError)
     }
 
     fn get_vcp_feature(&mut self, code: FeatureCode) -> Result<VcpValue, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.get_vcp_feature(code).map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .get_vcp_feature(code)
+                .map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.get_vcp_feature(code).map_err(From::from),
+            Handle::WinApi(ref mut monitor) => monitor
+                .get_vcp_feature(code)
+                .map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut monitor) => monitor.get_vcp_feature(code).map_err(From::from),
+            Handle::MacOS(ref mut monitor) => monitor
+                .get_vcp_feature(code)
+                .map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.get_vcp_feature(code).map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => {
+                i2c.get_vcp_feature(code).map_err(BackendError::NvapiError)
+            }
         }
+        .map_err(From::from)
     }
 
     fn set_vcp_feature(&mut self, code: FeatureCode, value: u16) -> Result<(), Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .set_vcp_feature(code, value)
+                .map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.set_vcp_feature(code, value).map_err(From::from),
+            Handle::WinApi(ref mut monitor) => monitor
+                .set_vcp_feature(code, value)
+                .map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut monitor) => monitor.set_vcp_feature(code, value).map_err(From::from),
+            Handle::MacOS(ref mut monitor) => monitor
+                .set_vcp_feature(code, value)
+                .map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => i2c
+                .set_vcp_feature(code, value)
+                .map_err(BackendError::NvapiError),
         }
+        .map_err(From::from)
     }
 
     fn save_current_settings(&mut self) -> Result<(), Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.save_current_settings().map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .save_current_settings()
+                .map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.save_current_settings().map_err(From::from),
+            Handle::WinApi(ref mut monitor) => monitor
+                .save_current_settings()
+                .map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut monitor) => monitor.save_current_settings().map_err(From::from),
+            Handle::MacOS(ref mut monitor) => monitor
+                .save_current_settings()
+                .map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.save_current_settings().map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => i2c
+                .save_current_settings()
+                .map_err(BackendError::NvapiError),
         }
+        .map_err(From::from)
     }
 
     fn get_timing_report(&mut self) -> Result<TimingMessage, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.get_timing_report().map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .get_timing_report()
+                .map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.get_timing_report().map_err(From::from),
+            Handle::WinApi(ref mut monitor) => monitor
+                .get_timing_report()
+                .map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut monitor) => monitor.get_timing_report().map_err(From::from),
+            Handle::MacOS(ref mut monitor) => monitor
+                .get_timing_report()
+                .map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.get_timing_report().map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => i2c.get_timing_report().map_err(BackendError::NvapiError),
         }
+        .map_err(From::from)
     }
 }
 
@@ -615,28 +703,38 @@ impl DdcTable for Handle {
     fn table_read(&mut self, code: FeatureCode) -> Result<Vec<u8>, Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.table_read(code).map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .table_read(code)
+                .map_err(|e| Error::LowLevelError(BackendError::I2cDeviceError(e))),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut i2c) => i2c.table_read(code).map_err(From::from),
+            Handle::MacOS(ref mut i2c) => i2c
+                .table_read(code)
+                .map_err(|e| Error::LowLevelError(BackendError::MacOsError(e))),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(_) =>
-                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
+            Handle::WinApi(_) => Err(Error::UnsupportedOp),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.table_read(code).map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => i2c
+                .table_read(code)
+                .map_err(|e| Error::LowLevelError(BackendError::NvapiError(e))),
         }
     }
 
     fn table_write(&mut self, code: FeatureCode, offset: u16, value: &[u8]) -> Result<(), Self::Error> {
         match *self {
             #[cfg(feature = "has-ddc-i2c")]
-            Handle::I2cDevice(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .table_write(code, offset, value)
+                .map_err(|e| Error::LowLevelError(BackendError::I2cDeviceError(e))),
             #[cfg(feature = "has-ddc-macos")]
-            Handle::MacOS(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
+            Handle::MacOS(ref mut i2c) => i2c
+                .table_write(code, offset, value)
+                .map_err(|e| Error::LowLevelError(BackendError::MacOsError(e))),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(_) =>
-                Err(io::Error::new(io::ErrorKind::Other, "winapi does not support DDC tables").into()),
+            Handle::WinApi(_) => Err(Error::UnsupportedOp),
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c.table_write(code, offset, value).map_err(From::from),
+            Handle::Nvapi(ref mut i2c) => i2c
+                .table_write(code, offset, value)
+                .map_err(|e| Error::LowLevelError(BackendError::NvapiError(e))),
         }
     }
 }
