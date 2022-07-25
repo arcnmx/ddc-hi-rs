@@ -45,31 +45,24 @@ pub struct Display {
     pub handle: Handle,
     /// Information about the connected display.
     pub info: DisplayInfo,
-    filled_caps: bool,
 }
 
 impl Display {
     /// Create a new display from the specified handle.
     pub fn new(handle: Handle, info: DisplayInfo) -> Self {
-        Display {
-            handle,
-            info,
-            filled_caps: false,
-        }
+        Display { handle, info }
     }
 
     /// Updates the display info with data retrieved from the device's
     /// reported capabilities.
     pub fn update_capabilities(&mut self) -> Result<(), Error> {
-        if !self.filled_caps {
-            let (backend, id) = (self.info.backend, self.info.id.clone());
-            let caps = self.handle.capabilities()?;
-            let info = DisplayInfo::from_capabilities(backend, id, &caps);
-            if info.mccs_version.is_some() {
-                self.info.mccs_database = Default::default();
-            }
-            self.info.update_from(&info);
+        let (backend, id) = (self.info.backend, self.info.id.clone());
+        let caps = self.handle.capabilities()?;
+        let info = DisplayInfo::from_capabilities(backend, id, &caps);
+        if info.mccs_version.is_some() {
+            self.info.mccs_database = Default::default();
         }
+        self.info.update_from(&info);
 
         Ok(())
     }
