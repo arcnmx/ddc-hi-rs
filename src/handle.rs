@@ -1,6 +1,6 @@
 use {
     crate::{BackendError, Error},
-    ddc::{Ddc, DdcTable, FeatureCode, TimingMessage, VcpValue},
+    ddc::{Ddc, DdcTable, Edid, FeatureCode, TimingMessage, VcpValue},
 };
 
 /// A handle allowing communication with a display
@@ -39,6 +39,27 @@ impl ddc::DdcHost for Handle {
             Handle::MacOS(ref mut monitor) => monitor.sleep(),
             #[cfg(feature = "has-nvapi")]
             Handle::Nvapi(ref mut i2c) => i2c.sleep(),
+        }
+    }
+}
+
+impl Edid for Handle {
+    type EdidError = Error;
+
+    fn read_edid(&mut self, offset: u8, data: &mut [u8]) -> Result<usize, Self::EdidError> {
+        match *self {
+            #[cfg(feature = "has-ddc-i2c")]
+            Handle::I2cDevice(ref mut i2c) => i2c
+                .read_edid(offset, data)
+                .map_err(|e| BackendError::I2cDeviceError(ddc_i2c::Error::I2c(e)).into()),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi(ref mut monitor) => Err(Error::UnsupportedOp), // TODO
+            #[cfg(feature = "has-ddc-macos")]
+            Handle::MacOS(ref mut monitor) => Err(Error::UnsupportedOp), // TODO
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(ref mut i2c) => i2c
+                .read_edid(offset, data)
+                .map_err(|e| BackendError::NvapiError(ddc_i2c::Error::I2c(e)).into()),
         }
     }
 }
