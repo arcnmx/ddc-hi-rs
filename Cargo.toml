@@ -24,24 +24,24 @@ include = [
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-ddc = "0.2"
+ddc = { version = "0.3", git = "https://github.com/arcnmx/ddc-rs", branch = "v0.3.x" }
 edid = "0.3"
-mccs = "0.1"
-mccs-caps = "0.1"
-mccs-db = "0.1"
+mccs = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
+mccs-caps = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
+mccs-db = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
 thiserror = "1"
 log = "0.4"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-ddc-i2c = { version = "0.2", default-features = false, features = ["with-linux", "with-linux-enumerate"], optional = false }
+ddc-i2c = { version = "0.3", features = ["enumerate-udev"], optional = false, git = "https://github.com/arcnmx/ddc-i2c-rs", branch = "v0.3.x" }
 
 [target.'cfg(windows)'.dependencies]
-ddc-winapi = { version = "0.2", optional = true }
+ddc-winapi = { version = "0.3", optional = true, git = "https://github.com/arcnmx/ddc-winapi-rs", branch = "v0.3.x" }
 nvapi = { version = "0.1", default-features = false, features = ["i2c"], optional = true }
-ddc-i2c = { version = "0.2", optional = true }
+ddc-i2c = { version = "0.3", optional = true, git = "https://github.com/arcnmx/ddc-i2c-rs", branch = "v0.3.x" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-ddc-macos = { version = "0.2", optional = true }
+ddc-macos = { version = "0.3", optional = true, git = "https://github.com/arcnmx/ddc-macos-rs", branch = "v0.3.x" }
 
 [features]
 default = ["ddc-i2c", "ddc-winapi", "nvapi", "ddc-macos"]

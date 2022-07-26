@@ -1,4 +1,4 @@
-use {std::io, thiserror::Error};
+use {crate::Backend, std::io, thiserror::Error};
 
 /// The error type for high level DDC/CI monitor operations.
 #[derive(Debug, Error)]
@@ -6,6 +6,10 @@ pub enum Error {
     /// Unsupported operation.
     #[error("the backend does not support the operation")]
     UnsupportedOp,
+
+    /// An error occurred while parsing EDID data.
+    #[error("failed to parse EDID: {0}")]
+    EdidParseError(io::Error),
 
     /// An error occurred while reading the capabilities.
     #[error("failed to read capabilities string: {0}")]
@@ -44,4 +48,35 @@ pub enum BackendError {
     /// Nvapi error.
     #[error("nvapi error: {0}")]
     NvapiError(ddc_i2c::Error<nvapi::Status>),
+}
+
+impl BackendError {
+    pub fn backend(&self) -> Backend {
+        match self {
+            #[cfg(feature = "has-ddc-i2c")]
+            BackendError::I2cDeviceError(..) => Backend::I2cDevice,
+            #[cfg(feature = "has-ddc-winapi")]
+            BackendError::WinApiError(..) => Backend::WinApi,
+            #[cfg(feature = "has-ddc-macos")]
+            BackendError::MacOsError(..) => Backend::MacOS,
+            #[cfg(feature = "has-nvapi")]
+            BackendError::NvapiError(..) => Backend::Nvapi,
+        }
+    }
+}
+
+impl Error {
+    pub fn backend(&self) -> Option<Backend> {
+        match self {
+            Error::CapabilitiesReadError(e) | Error::LowLevelError(e) => Some(e.backend()),
+            _ => None,
+        }
+    }
+
+    pub fn unsupported_ok<T>(res: Result<T, Self>) -> Result<Option<T>, Self> {
+        match res {
+            Err(Error::UnsupportedOp) => Ok(None),
+            res => res.map(Some),
+        }
+    }
 }

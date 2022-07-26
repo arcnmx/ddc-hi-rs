@@ -1,5 +1,5 @@
 use {
-    crate::{BackendError, Error},
+    crate::{Backend, BackendError, Error},
     ddc::{Ddc, DdcTable, Edid, FeatureCode, TimingMessage, VcpValue},
 };
 
@@ -7,7 +7,7 @@ use {
 pub enum Handle {
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-i2c")]
-    I2cDevice(ddc_i2c::I2cDeviceDdc),
+    I2cDevice(ddc_i2c::LinuxDevice),
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-winapi")]
     WinApi(ddc_winapi::Monitor),
@@ -23,6 +23,41 @@ impl Handle {
     /// Request and parse the display's capabilities string.
     pub fn capabilities(&mut self) -> Result<mccs::Capabilities, Error> {
         mccs_caps::parse_capabilities(&self.capabilities_string()?).map_err(Error::CapabilitiesParseError)
+    }
+
+    pub fn backend(&self) -> Backend {
+        match self {
+            #[cfg(feature = "has-ddc-i2c")]
+            Handle::I2cDevice(..) => Backend::I2cDevice,
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi(..) => Backend::WinApi,
+            #[cfg(feature = "has-ddc-macos")]
+            Handle::MacOS(..) => Backend::MacOS,
+            #[cfg(feature = "has-nvapi")]
+            Handle::Nvapi(..) => Backend::Nvapi,
+        }
+    }
+
+    pub fn mccs_version(&mut self) -> Result<Option<mccs::Version>, Error> {
+        let version = self.get_vcp_feature(0xdf)?;
+        let version = mccs::Version::new(version.sh, version.sl);
+        Ok(if version != mccs::Version::default() {
+            Some(version)
+        } else {
+            None
+        })
+    }
+
+    pub fn edid_data(&mut self) -> Result<Vec<u8>, Error> {
+        let len = match self.backend() {
+            #[cfg(feature = "has-nvapi")]
+            Backend::Nvapi => 0x80,
+            _ => 0x100,
+        };
+        let mut edid = vec![0u8; len];
+        let len = self.read_edid(0, &mut edid)?;
+        edid.truncate(len);
+        Ok(edid)
     }
 }
 
@@ -57,9 +92,16 @@ impl Edid for Handle {
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => Err(Error::UnsupportedOp), // TODO
             #[cfg(feature = "has-nvapi")]
-            Handle::Nvapi(ref mut i2c) => i2c
-                .read_edid(offset, data)
-                .map_err(|e| BackendError::NvapiError(ddc_i2c::Error::I2c(e)).into()),
+            Handle::Nvapi(ref mut i2c) => {
+                // XXX: hack around broken nvidia drivers
+                // the register argument doesn't seem to work at all,
+                // so write the edid eeprom offset here first
+                i2c.inner_mut().set_address(0x50);
+                let _ = i2c.inner_mut().nvapi_write(&[], &[0]);
+
+                i2c.read_edid(offset, data)
+                    .map_err(|e| BackendError::NvapiError(ddc_i2c::Error::I2c(e)).into())
+            },
         }
     }
 }
