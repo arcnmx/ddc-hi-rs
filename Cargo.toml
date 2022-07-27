@@ -1,6 +1,6 @@
 [package]
 name = "ddc-hi"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["arcnmx"]
 build = "build.rs"
 edition = "2018"
