@@ -1,4 +1,4 @@
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/ddc-hi/0.5.0")]
 
 //! High level DDC/CI monitor controls.
