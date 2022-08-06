@@ -3,6 +3,7 @@ use crate::{Backend, DisplayInfo};
 /// A query to filter out matching displays.
 ///
 /// Most comparisons must match the full string.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Query {
     /// Matches any display
     Any,
