@@ -1,4 +1,7 @@
-use std::{fmt, str};
+use {
+    std::{fmt, str},
+    thiserror::Error,
+};
 
 /// Identifies the backend driver used to communicate with a display.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -15,17 +18,12 @@ pub enum Backend {
 
 impl fmt::Display for Backend {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            Backend::I2cDevice => "i2c-dev",
-            Backend::WinApi => "winapi",
-            Backend::Nvapi => "nvapi",
-            Backend::MacOS => "macos",
-        })
+        f.write_str(self.name())
     }
 }
 
 impl str::FromStr for Backend {
-    type Err = ();
+    type Err = BackendParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -33,9 +31,15 @@ impl str::FromStr for Backend {
             "winapi" => Backend::WinApi,
             "nvapi" => Backend::Nvapi,
             "macos" => Backend::MacOS,
-            _ => return Err(()),
+            _ => return Err(BackendParseError { str: s.into() }),
         })
     }
+}
+
+#[derive(Debug, Error)]
+#[error("unknown backend {str}")]
+pub struct BackendParseError {
+    pub str: String,
 }
 
 impl Backend {
@@ -53,5 +57,14 @@ impl Backend {
             #[cfg(feature = "has-ddc-macos")]
             Backend::MacOS,
         ]
+    }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Backend::I2cDevice => "i2c-dev",
+            Backend::WinApi => "winapi",
+            Backend::Nvapi => "nvapi",
+            Backend::MacOS => "macos",
+        }
     }
 }
