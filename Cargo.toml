@@ -18,24 +18,24 @@ travis-ci = { repository = "arcnmx/ddc-hi-rs" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-ddc = "^0.2.0"
-edid = "^0.3.0"
-mccs = "^0.1.0"
-mccs-caps = "^0.1.0"
-mccs-db = "^0.1.1"
-anyhow = "^1.0.42"
-log = "^0.4.1"
+ddc = "0.2"
+edid = "0.3"
+mccs = "0.1"
+mccs-caps = "0.1"
+mccs-db = "0.1"
+anyhow = "1"
+log = "0.4"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-ddc-i2c = { version = "^0.2.1", features = ["with-linux", "with-linux-enumerate"], optional = true }
+ddc-i2c = { version = "0.2", default-features = false, features = ["with-linux", "with-linux-enumerate"], optional = false }
 
 [target.'cfg(windows)'.dependencies]
-ddc-winapi = { version = "^0.2.0", optional = true }
-nvapi = { version = "^0.1.2", default-features = false, features = ["i2c"], optional = true }
-ddc-i2c = { version = "^0.2.1", optional = true }
+ddc-winapi = { version = "0.2", optional = true }
+nvapi = { version = "0.1", default-features = false, features = ["i2c"], optional = true }
+ddc-i2c = { version = "0.2", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-ddc-macos = { version = "^0.2.0", optional = true }
+ddc-macos = { version = "0.2", optional = true }
 
 [features]
 default = ["ddc-i2c", "ddc-winapi", "nvapi", "ddc-macos"]
