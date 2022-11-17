@@ -13,8 +13,14 @@ repository = "https://github.com/arcnmx/ddc-hi-rs"
 readme = "README.md"
 license = "MIT"
 
+include = [
+	"/src/**/*.rs",
+	"/build.rs",
+	"/README*",
+	"/COPYING*",
+]
+
 [badges]
-travis-ci = { repository = "arcnmx/ddc-hi-rs" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
