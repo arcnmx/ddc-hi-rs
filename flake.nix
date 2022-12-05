@@ -83,6 +83,10 @@
       };
     } { };
     checks = {
+      rustfmt = { rust'builders, source }: rust'builders.check-rustfmt-unstable {
+        src = source;
+        config = ./.rustfmt.toml;
+      };
       versions = { rust'builders, source }: rust'builders.check-contents {
         src = source;
         patterns = [

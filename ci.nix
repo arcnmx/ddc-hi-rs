@@ -13,7 +13,10 @@ in {
     };
     jobs = {
       nixos = {
-        tasks.windows.inputs = singleton checks.windows;
+        tasks = {
+          windows.inputs = singleton checks.windows;
+          fmt.inputs = singleton checks.rustfmt;
+        };
       };
       macos.system = "x86_64-darwin";
     };
