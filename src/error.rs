@@ -26,6 +26,7 @@ pub enum Error {
 
 /// A wrapper for the DDC backend errors.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum BackendError {
     #[cfg(feature = "has-ddc-i2c")]
     /// I2c error.

@@ -4,6 +4,7 @@ use {
 };
 
 /// A handle allowing communication with a display
+#[non_exhaustive]
 pub enum Handle {
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-i2c")]
