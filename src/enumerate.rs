@@ -53,7 +53,6 @@ impl Display {
                 Err(e) => (Some(Err(e)), Default::default()),
             };
             errors.into_iter().chain(ids.into_iter().map(move |id| {
-                // TODO: it says mask, is it actually `1<<display_id` instead?
                 let mut i2c = nvapi::I2c::new(gpu.clone(), id.display_id);
                 // TODO: port=Some(1) instead?
                 // docs seem to indicate it's not optional, but the one example I can
@@ -62,7 +61,7 @@ impl Display {
 
                 let ddc = ddc_i2c::I2cDdc::new(i2c);
 
-                let idstr = format!("{}/{}:{:?}", id_prefix, id.display_id, id.connector);
+                let idstr = format!("displayid:{}/{}", id_prefix, id.display_id);
                 Ok(Display::new(Handle::Nvapi(ddc), idstr))
             }))
         }))
