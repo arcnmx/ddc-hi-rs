@@ -9,15 +9,13 @@ impl Display {
         use std::os::unix::fs::MetadataExt;
 
         let devs = ddc_i2c::UdevEnumerator::new()?;
-        Ok(devs.map(|ddc| {
+        Ok(devs.enumerate().map(|(i, ddc)| {
             ddc.open().map(|ddc| {
-                let id = ddc
-                    .inner_ref()
-                    .inner_ref()
-                    .metadata()
-                    .map(|meta| meta.rdev())
-                    .unwrap_or(Default::default());
-                Display::new(Handle::I2cDevice(ddc), id.to_string())
+                let id = ddc.inner_ref().inner_ref().metadata().map(|meta| meta.rdev());
+                Display::new(Handle::I2cDevice(ddc), match id {
+                    Ok(dev) => dev.to_string(),
+                    Err(..) => format!("index:{i}"),
+                })
             })
         }))
     }
