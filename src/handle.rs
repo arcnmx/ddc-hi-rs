@@ -11,7 +11,10 @@ pub enum Handle {
     I2cDevice(ddc_i2c::LinuxDevice),
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-winapi")]
-    WinApi(ddc_winapi::Monitor),
+    WinApi {
+        monitor: Option<ddc_winapi::Monitor>,
+        monitor_info: Option<ddc_winapi::DeviceInfo<'static>>,
+    },
     #[doc(hidden)]
     #[cfg(feature = "has-ddc-macos")]
     MacOS(ddc_macos::Monitor),
@@ -31,7 +34,7 @@ impl Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(..) => Backend::I2cDevice,
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(..) => Backend::WinApi,
+            Handle::WinApi { .. } => Backend::WinApi,
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(..) => Backend::MacOS,
             #[cfg(feature = "has-nvapi")]
@@ -70,7 +73,12 @@ impl ddc::DdcHost for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.sleep(),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.sleep(),
+            Handle::WinApi { monitor: None, .. } => (),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.sleep(),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.sleep(),
             #[cfg(feature = "has-nvapi")]
@@ -89,7 +97,14 @@ impl Edid for Handle {
                 .read_edid(offset, data)
                 .map_err(|e| BackendError::I2cDeviceError(ddc_i2c::Error::I2c(e)).into()),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => Err(Error::UnsupportedOp), // TODO
+            Handle::WinApi {
+                ref mut monitor_info, ..
+            } => match monitor_info {
+                Some(info) => info
+                    .read_edid(offset, data)
+                    .map_err(|e| BackendError::WinApiError(e).into()),
+                None => Err(Error::UnsupportedOp),
+            },
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => Err(Error::UnsupportedOp), // TODO
             #[cfg(feature = "has-nvapi")]
@@ -113,7 +128,12 @@ impl Ddc for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.capabilities_string().map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.capabilities_string().map_err(BackendError::WinApiError),
+            Handle::WinApi { monitor: None, .. } => return Err(Error::UnsupportedOp),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.capabilities_string().map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.capabilities_string().map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
@@ -127,7 +147,12 @@ impl Ddc for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.get_vcp_feature(code).map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.get_vcp_feature(code).map_err(BackendError::WinApiError),
+            Handle::WinApi { monitor: None, .. } => return Err(Error::UnsupportedOp),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.get_vcp_feature(code).map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.get_vcp_feature(code).map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
@@ -141,7 +166,12 @@ impl Ddc for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.set_vcp_feature(code, value).map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.set_vcp_feature(code, value).map_err(BackendError::WinApiError),
+            Handle::WinApi { monitor: None, .. } => return Err(Error::UnsupportedOp),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.set_vcp_feature(code, value).map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.set_vcp_feature(code, value).map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
@@ -155,7 +185,12 @@ impl Ddc for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.save_current_settings().map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.save_current_settings().map_err(BackendError::WinApiError),
+            Handle::WinApi { monitor: None, .. } => return Err(Error::UnsupportedOp),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.save_current_settings().map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.save_current_settings().map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
@@ -169,7 +204,12 @@ impl Ddc for Handle {
             #[cfg(feature = "has-ddc-i2c")]
             Handle::I2cDevice(ref mut i2c) => i2c.get_timing_report().map_err(BackendError::I2cDeviceError),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(ref mut monitor) => monitor.get_timing_report().map_err(BackendError::WinApiError),
+            Handle::WinApi { monitor: None, .. } => return Err(Error::UnsupportedOp),
+            #[cfg(feature = "has-ddc-winapi")]
+            Handle::WinApi {
+                monitor: Some(ref mut monitor),
+                ..
+            } => monitor.get_timing_report().map_err(BackendError::WinApiError),
             #[cfg(feature = "has-ddc-macos")]
             Handle::MacOS(ref mut monitor) => monitor.get_timing_report().map_err(BackendError::MacOsError),
             #[cfg(feature = "has-nvapi")]
@@ -191,7 +231,7 @@ impl DdcTable for Handle {
                 .table_read(code)
                 .map_err(|e| Error::LowLevelError(BackendError::MacOsError(e))),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(_) => Err(Error::UnsupportedOp),
+            Handle::WinApi { .. } => Err(Error::UnsupportedOp),
             #[cfg(feature = "has-nvapi")]
             Handle::Nvapi(ref mut i2c) => i2c
                 .table_read(code)
@@ -210,7 +250,7 @@ impl DdcTable for Handle {
                 .table_write(code, offset, value)
                 .map_err(|e| Error::LowLevelError(BackendError::MacOsError(e))),
             #[cfg(feature = "has-ddc-winapi")]
-            Handle::WinApi(_) => Err(Error::UnsupportedOp),
+            Handle::WinApi { .. } => Err(Error::UnsupportedOp),
             #[cfg(feature = "has-nvapi")]
             Handle::Nvapi(ref mut i2c) => i2c
                 .table_write(code, offset, value)
