@@ -107,7 +107,7 @@
       };
       windows = { outputs'checks'test, rust-w64 }: rust-w64.latest.rustPlatform.buildRustPackage {
         inherit (outputs'checks'test) pname version src buildType cargoBuildNoDefaultFeatures cargoTestFlags;
-        cargoSha256 = "sha256-C/5KBdIojB9Bhw/YU1aLa2j0Oz+WYYON0tOErMN1OWo=";
+        inherit (self.lib.crate) cargoLock;
       };
     };
     lib = with nixlib; {
