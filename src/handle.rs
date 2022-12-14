@@ -1,6 +1,7 @@
 use {
     crate::{Backend, BackendError, Error},
     ddc::{Ddc, DdcTable, Edid, FeatureCode, TimingMessage, VcpValue},
+    std::fmt::{self, Debug, Formatter},
 };
 
 /// A handle allowing communication with a display
@@ -255,6 +256,33 @@ impl DdcTable for Handle {
             Handle::Nvapi(ref mut i2c) => i2c
                 .table_write(code, offset, value)
                 .map_err(|e| Error::LowLevelError(BackendError::NvapiError(e))),
+        }
+    }
+}
+
+impl Debug for Handle {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            #[cfg(feature = "has-ddc-i2c")]
+            Self::I2cDevice(device) => {
+                use std::os::unix::fs::MetadataExt;
+
+                let mut f = f.debug_tuple("Handle::I2cDevice");
+                if let Ok(rdev) = device.inner_ref().inner_ref().metadata().map(|meta| meta.rdev()) {
+                    f.field(&rdev);
+                }
+                f.finish()
+            },
+            #[cfg(feature = "has-ddc-winapi")]
+            Self::WinApi { monitor, monitor_info } => f
+                .debug_tuple("Handle::WinApi")
+                .field(monitor)
+                .field(monitor_info)
+                .finish(),
+            #[cfg(feature = "has-ddc-macos")]
+            Self::MacOS(monitor) => f.debug_tuple("Handle::MacOS").field(monitor).finish(),
+            #[cfg(feature = "has-nvapi")]
+            Self::Nvapi(handle) => f.debug_tuple("Handle::Nvapi").finish(),
         }
     }
 }

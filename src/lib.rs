@@ -45,6 +45,7 @@ pub use ddc::{FeatureCode, TimingMessage, VcpValue, VcpValueType};
 use {log::warn, mccs::Capabilities, std::io};
 
 /// An active handle to a connected display.
+#[derive(Debug)]
 pub struct Display {
     /// A unique identifier for the display, format is specific to the backend.
     pub id: String,
