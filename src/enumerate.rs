@@ -50,18 +50,14 @@ impl Display {
 
         fn mondev_matches_info(
             info: &DeviceInfo,
-            disp_device: Option<&DisplayDevice>,
+            disp_devices: &Vec<&DisplayDevice>,
             mon: &MonitorDevice<'static>,
         ) -> bool {
             if warn_result(info.matches_device(mon)) == Some(true) {
-                return true
-            } else if let Some(disp_device) = disp_device {
-                if disp_device == mon.display() {
-                    let bus = info.get::<u32>(DevicePropertyKey::DEVICE_BUS_NUMBER);
-                    todo!("match this up by sort/index, also consider whether it matches {bus:?}? because it didn't match {:?}", mon.id())
-                }
+                disp_devices.iter().any(|d| d == &mon.display())
+            } else {
+                false
             }
-            false
         }
 
         fn mondisp<'a>(mon: Result<&'a MonitorDevice, &'a DisplayDevice>) -> &'a DisplayDevice {
@@ -101,15 +97,16 @@ impl Display {
         let si_monitors: Vec<_> = si_monitors
             .map(|info| {
                 info.map(|info| {
-                    let disp_device = display_devices
+                    let disp_devices: Vec<_> = display_devices
                         .iter()
-                        .find(|dev| warn_result(info.matches_device(dev)) == Some(true));
-                    let mon_device =
-                        find_remove(&mut monitor_devices, |mon| mondev_matches_info(&info, disp_device, mon));
+                        .filter(|dev| warn_result(info.matches_device(dev)) == Some(true))
+                        .collect();
+                    let mon_device = find_remove(&mut monitor_devices, |mon| {
+                        mondev_matches_info(&info, &disp_devices, mon)
+                    });
                     if let Some(mon) = mon_device {
-                        debug_assert_eq!(Some(mon.display()), disp_device);
                         (info, Some(Ok(mon)))
-                    } else if let Some(dev) = disp_device.cloned() {
+                    } else if let Some(dev) = disp_devices.into_iter().next().cloned() {
                         (info, Some(Err(dev)))
                     } else {
                         (info, None)
