@@ -135,7 +135,7 @@ impl Display {
 
         let caps_version = self.capabilities.as_ref().and_then(|caps| caps.mccs_version);
         let res_version = if caps_version.is_none() {
-            self.update_version()
+            Error::unsupported_ok(self.update_version()).map(drop)
         } else {
             Ok(())
         };
