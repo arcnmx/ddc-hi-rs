@@ -20,6 +20,9 @@ include = [
 	"/COPYING*",
 ]
 
+[package.metadata.docs.rs]
+features = ["log-kv"]
+
 [badges]
 maintenance = { status = "passively-maintained" }
 
@@ -30,7 +33,7 @@ mccs = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v
 mccs-caps = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
 mccs-db = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
 thiserror = "1"
-log = "0.4"
+log = "0.4.12"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ddc-i2c = { version = "0.3", features = ["enumerate-udev"], optional = false, git = "https://github.com/arcnmx/ddc-i2c-rs", branch = "v0.3.x" }
@@ -45,3 +48,4 @@ ddc-macos = { version = "0.3", optional = true, git = "https://github.com/arcnmx
 
 [features]
 default = ["ddc-i2c", "ddc-winapi", "nvapi", "ddc-macos"]
+log-kv = ["log/kv_unstable", "log/kv_unstable_std"]

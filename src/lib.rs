@@ -30,6 +30,8 @@ mod error;
 mod handle;
 mod query;
 
+#[cfg(feature = "log-kv")]
+use log::as_error;
 pub use {
     self::{
         backend::Backend,
@@ -87,7 +89,15 @@ impl Display {
             Some(Ok(info)) => info,
             e => {
                 if let Some(Err(e)) = e {
-                    warn!("Failed to parse {}/{} EDID: {:?}", backend, self.id, e);
+                    #[cfg(feature = "log-kv")]
+                    warn!(
+                        display = self,
+                        backend = backend,
+                        error = as_error!(e);
+                        "Failed to parse {self} EDID: {e}"
+                    );
+                    #[cfg(not(feature = "log-kv"))]
+                    warn!("Failed to parse {self} EDID: {e}");
                 }
                 DisplayInfo::new(backend, self.id.clone())
             },
@@ -193,5 +203,57 @@ impl Display {
 impl fmt::Display for Display {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(&self.id)
+    }
+}
+
+#[cfg(feature = "log-kv")]
+mod impl_kv {
+    use {
+        crate::{Backend, Display, DisplayInfo},
+        log::kv::{Error, Key, Source, ToKey, ToValue, Value, Visitor},
+    };
+
+    impl ToKey for Display {
+        fn to_key(&self) -> Key<'_> {
+            self.id.to_key()
+        }
+    }
+
+    impl ToValue for Display {
+        fn to_value(&self) -> Value<'_> {
+            self.id.to_value()
+        }
+    }
+
+    impl ToValue for &'_ mut Display {
+        fn to_value(&self) -> Value<'_> {
+            ToValue::to_value(&**self)
+        }
+    }
+
+    impl Source for Display {
+        fn visit<'kvs>(&'kvs self, visitor: &mut dyn Visitor<'kvs>) -> Result<(), Error> {
+            visitor.visit_pair("id".to_key(), self.id.to_value())?;
+            visitor.visit_pair("backend".to_key(), self.backend().name().to_value())?;
+            let version = match &self.mccs_version {
+                Some(version) => Value::from_display(version),
+                None => ().to_value(),
+            };
+            visitor.visit_pair("mccs_version".to_key(), version)?;
+
+            Ok(())
+        }
+    }
+
+    impl ToValue for DisplayInfo {
+        fn to_value(&self) -> Value<'_> {
+            Value::capture_display(self)
+        }
+    }
+
+    impl ToValue for Backend {
+        fn to_value(&self) -> Value<'_> {
+            self.name().to_value()
+        }
     }
 }

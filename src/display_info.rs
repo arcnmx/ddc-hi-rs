@@ -1,3 +1,5 @@
+#[cfg(feature = "log-kv")]
+use log::{as_debug, as_error};
 use {
     crate::Backend,
     ddc::Ddc,
@@ -82,7 +84,17 @@ impl DisplayInfo {
     ///
     /// May fail to parse the EDID data.
     pub fn from_edid(backend: Backend, id: String, edid_data: Vec<u8>) -> io::Result<Self> {
-        trace!("DisplayInfo::from_edid({:?}, {})", backend, id);
+        #[cfg(feature = "log-kv")]
+        trace!(
+            ty = "DisplayInfo",
+            operation = "from_edid",
+            display = id,
+            backend = backend,
+            edid = as_debug!(edid_data);
+            "DisplayInfo::from_edid({backend}, {id})"
+        );
+        #[cfg(not(feature = "log-kv"))]
+        trace!("DisplayInfo::from_edid({backend}, {id})");
 
         let edid = edid::parse(&edid_data)
             .to_result()
@@ -118,7 +130,16 @@ impl DisplayInfo {
 
     /// Create a new `DisplayInfo` from parsed capabilities.
     pub fn from_capabilities(backend: Backend, id: String, caps: &mccs::Capabilities) -> Self {
-        trace!("DisplayInfo::from_capabilities({:?}, {})", backend, id);
+        #[cfg(feature = "log-kv")]
+        trace!(
+            ty = "DisplayInfo",
+            operation = "from_capabilities",
+            display = id,
+            backend = backend;
+            "DisplayInfo::from_capabilities({backend}, {id})"
+        );
+        #[cfg(not(feature = "log-kv"))]
+        trace!("DisplayInfo::from_capabilities({backend}, {id})");
 
         let edid = caps
             .edid
@@ -155,7 +176,15 @@ impl DisplayInfo {
             },
             Ok(None) => (),
             Err(e) => {
-                warn!("Failed to parse edid from caps of {}: {}", res, e);
+                #[cfg(feature = "log-kv")]
+                warn!(
+                    display = res.id,
+                    backend = backend,
+                    error = as_error!(e);
+                    "Failed to parse edid from caps of {res}: {e}"
+                );
+                #[cfg(not(feature = "log-kv"))]
+                warn!("Failed to parse edid from caps of {res}: {e}");
             },
         }
 
@@ -219,6 +248,16 @@ impl DisplayInfo {
     /// string.
     pub fn update_from_ddc<D: Ddc>(&mut self, ddc: &mut D) -> Result<(), D::Error> {
         if self.mccs_version.is_none() {
+            #[cfg(feature = "log-kv")]
+            trace!(
+                ty = "DisplayInfo",
+                operation = "from_capabilities",
+                info = &*self,
+                display = self.id,
+                backend = self.backend;
+                "DisplayInfo::update_from_ddc"
+            );
+            #[cfg(not(feature = "log-kv"))]
             trace!("DisplayInfo::update_from_ddc");
 
             let version = ddc.get_vcp_feature(0xdf)?;

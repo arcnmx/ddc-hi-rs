@@ -1,3 +1,5 @@
+#[cfg(feature = "log-kv")]
+use log::as_error;
 use {
     crate::{BackendError, Display, Error, Handle},
     log::warn,
@@ -34,7 +36,14 @@ impl Display {
             match res {
                 Ok(v) => Some(v),
                 Err(e) => {
-                    warn!("enumeration error: {e:?}");
+                    #[cfg(feature = "log-kv")]
+                    warn!(
+                        backend = crate::Backend::WinApi,
+                        error = as_error!(e);
+                        "enumeration error: {e}"
+                    );
+                    #[cfg(not(feature = "log-kv"))]
+                    warn!("enumeration error: {e}");
                     None
                 },
             }
@@ -314,7 +323,15 @@ impl Display {
                 display.map(|mut display| match display.update_edid() {
                     Ok(()) | Err(Error::UnsupportedOp) => display,
                     Err(e) => {
-                        warn!("Failed to read EDID for a {} display: {}", display.backend(), e);
+                        #[cfg(feature = "log-kv")]
+                        warn!(
+                            display = display,
+                            backend = e.backend(),
+                            error = as_error!(e);
+                            "Failed to read EDID for {display}: {e}"
+                        );
+                        #[cfg(not(feature = "log-kv"))]
+                        warn!("Failed to read EDID for {display}: {e}");
                         display
                     },
                 })
@@ -322,7 +339,14 @@ impl Display {
             .filter_map(|display| match display {
                 Ok(display) => Some(display),
                 Err(e) => {
-                    warn!("Failed to enumerate a {} display: {}", e.backend(), e);
+                    #[cfg(feature = "log-kv")]
+                    warn!(
+                        backend = e.backend(),
+                        error = as_error!(e);
+                        "Failed to enumerate a {} display: {e}", e.backend()
+                    );
+                    #[cfg(not(feature = "log-kv"))]
+                    warn!("Failed to enumerate a {} display: {e}", e.backend());
                     None
                 },
             })
