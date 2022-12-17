@@ -30,19 +30,25 @@ mod error;
 mod handle;
 mod query;
 
-pub use self::{
-    backend::Backend,
-    display_info::DisplayInfo,
-    error::{BackendError, Error},
-    handle::Handle,
-    query::Query,
+pub use {
+    self::{
+        backend::Backend,
+        display_info::DisplayInfo,
+        error::{BackendError, Error},
+        handle::Handle,
+        query::Query,
+    },
+    ddc::{FeatureCode, TimingMessage, VcpValue, VcpValueType},
+};
+use {
+    log::warn,
+    mccs::Capabilities,
+    std::{fmt, io},
 };
 
 pub mod traits {
     pub use ddc::{Ddc, DdcHost, DdcTable, Edid};
 }
-pub use ddc::{FeatureCode, TimingMessage, VcpValue, VcpValueType};
-use {log::warn, mccs::Capabilities, std::io};
 
 /// An active handle to a connected display.
 #[derive(Debug)]
@@ -181,5 +187,11 @@ impl Display {
             }
         }
         Ok(())
+    }
+}
+
+impl fmt::Display for Display {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(&self.id)
     }
 }
