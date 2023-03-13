@@ -3,6 +3,7 @@ use log::as_error;
 use {
     crate::{BackendError, Display, Error, Handle},
     log::warn,
+    std::collections::BTreeSet,
 };
 
 impl Display {
@@ -10,14 +11,18 @@ impl Display {
     pub fn enumerate_i2c() -> std::io::Result<impl Iterator<Item = std::io::Result<Display>>> {
         use std::os::unix::fs::MetadataExt;
 
+        let mut idreg = IdRegistry::default();
         let devs = ddc_i2c::UdevEnumerator::new()?;
-        Ok(devs.enumerate().map(|(i, ddc)| {
+        Ok(devs.enumerate().map(move |(i, ddc)| {
             ddc.open().map(|ddc| {
-                let id = ddc.inner_ref().inner_ref().metadata().map(|meta| meta.rdev());
-                Display::new(Handle::I2cDevice(ddc), match id {
-                    Ok(dev) => dev.to_string(),
-                    Err(..) => format!("index:{i}"),
-                })
+                let dev = ddc
+                    .inner_ref()
+                    .inner_ref()
+                    .metadata()
+                    .map(|meta| meta.rdev())
+                    .map(|dev| dev.to_string());
+                let id = dev.ok().and_then(|dev| idreg.insert(dev)).indexed(&mut idreg, i);
+                Display::new(Handle::I2cDevice(ddc), id)
             })
         }))
     }
@@ -28,7 +33,7 @@ impl Display {
             ddc_winapi::{DeviceInfo, DeviceInfoSet, DevicePropertyKey, DisplayDevice, MonitorDevice, Output},
             std::{
                 iter,
-                sync::{Arc, RwLock},
+                sync::{Arc, Mutex, RwLock},
             },
         };
 
@@ -182,42 +187,46 @@ impl Display {
                 }
             }));
 
-        Ok(devs.enumerate().map(|(i, (monitor, mon_device, monitor_info))| {
+        let mut idreg = IdRegistry::default();
+        Ok(devs.enumerate().map(move |(i, (monitor, mon_device, monitor_info))| {
             let id = mon_device
                 .as_ref()
                 .and_then(|mon| match mon {
                     Ok(mon) => Some(format!("mon:{}", mon.id())),
                     _ => None,
                 })
-                .or_else(|| {
-                    monitor_info
-                        .as_ref()
-                        .and_then(|simon| simon.as_ref().ok())
-                        .and_then(|simon| {
-                            warn_result(simon.property(DevicePropertyKey::DEVICE_INSTANCE_ID))
-                                .flatten()
-                                .map(|iid| format!("si:iid:{iid}"))
-                                .or_else(|| {
-                                    warn_result(simon.property(DevicePropertyKey::DEVICE_HARDWARE_IDS))
-                                        .flatten()
-                                        .map(|ids| format!("si:hw:{ids}"))
-                                })
-                        })
-                })
-                .or_else(|| {
-                    monitor.as_ref().and_then(|(phy, hmon, i)| match phy {
-                        Ok((phy, ii)) => warn_result(hmon.info())
-                            .map(|info| format!("hmon:{}\\Monitor{ii}", info.device_name()))
-                            .or_else(|| match &phy.description().to_string()[..] {
-                                "Generic PnP Monitor" => None,
-                                desc => Some(format!("desc:{}", desc)),
-                            })
-                            .or_else(|| Some(format!("hmoni:{i}/{ii}"))),
-                        Err(_) => None,
+                .and_then(|id| idreg.insert(id));
+            let id = match monitor_info.as_ref().and_then(|simon| simon.as_ref().ok()) {
+                Some(simon) => id
+                    .insert_id_with_opt(&mut idreg, || {
+                        warn_result(simon.property(DevicePropertyKey::DEVICE_INSTANCE_ID))
+                            .flatten()
+                            .map(|iid| format!("si:iid:{iid}"))
                     })
-                });
-            let id = id.unwrap_or_else(|| format!("index:{i}"));
-            let id = id.replace("\\", "/").replace(&['{', '}'], "");
+                    .insert_id_with_opt(&mut idreg, || {
+                        warn_result(simon.property(DevicePropertyKey::DEVICE_HARDWARE_IDS))
+                            .flatten()
+                            .map(|ids| format!("si:hw:{ids}"))
+                    }),
+                None => None,
+            };
+            let id = match monitor.as_ref() {
+                Some((phy, hmon, i)) => match phy {
+                    Ok((phy, ii)) => id
+                        .insert_id_with_opt(&mut idreg, || {
+                            warn_result(hmon.info()).map(|info| format!("hmon:{}\\Monitor{ii}", info.device_name()))
+                        })
+                        .insert_id_with_opt(&mut idreg, || match &phy.description().to_string()[..] {
+                            "Generic PnP Monitor" => None,
+                            desc => Some(format!("desc:{}", desc)),
+                        })
+                        .insert_id_with(&mut idreg, || format!("hmoni:{i}/{ii}"))
+                        .or_else(|| Some(format!("hmoni:{i}/{ii}"))),
+                    Err(_) => None,
+                },
+                None => None,
+            };
+            let id = id.indexed(&mut idreg, i);
 
             let monitor = monitor.map(|(phy, ..)| phy.map(|(p, _)| p)).transpose();
             let monitor_info = monitor_info.transpose();
@@ -235,26 +244,34 @@ impl Display {
 
     #[cfg(feature = "has-ddc-macos")]
     pub fn enumerate_macos() -> Result<impl Iterator<Item = Display>, ddc_macos::Error> {
+        let mut idreg = IdRegistry::default();
         let devs = ddc_macos::Monitor::enumerate()?;
-        Ok(devs.into_iter().map(|ddc| {
-            let id = ddc.description();
+        Ok(devs.into_iter().enumerate().map(move |(i, ddc)| {
+            let id = idreg.insert(ddc.description()).indexed(&mut idreg, i);
             Display::new(Handle::MacOS(ddc), id)
         }))
     }
 
     #[cfg(feature = "has-nvapi")]
     pub fn enumerate_nvapi() -> nvapi::Result<impl Iterator<Item = nvapi::Result<Display>>> {
-        use std::rc::Rc;
+        use std::{
+            rc::Rc,
+            sync::{Arc, Mutex},
+        };
 
         nvapi::initialize()?;
-        Ok(nvapi::PhysicalGpu::enumerate()?.into_iter().flat_map(|gpu| {
+        let idreg = Arc::new(Mutex::new(IdRegistry::default()));
+        let gpus = nvapi::PhysicalGpu::enumerate()?.into_iter().enumerate();
+        Ok(gpus.flat_map(move |(i, gpu)| {
             let gpu = Rc::new(gpu);
             let id_prefix = gpu.short_name().unwrap_or("NVAPI".into());
             let (errors, ids) = match gpu.display_ids_connected(nvapi::ConnectedIdsFlags::empty()) {
                 Ok(ids) => (None, ids),
                 Err(e) => (Some(Err(e)), Default::default()),
             };
-            errors.into_iter().chain(ids.into_iter().map(move |id| {
+            let idreg = idreg.clone();
+            let ids = ids.into_iter().enumerate();
+            errors.into_iter().chain(ids.map(move |(subi, id)| {
                 let mut i2c = nvapi::I2c::new(gpu.clone(), id.display_id);
                 // TODO: port=Some(1) instead?
                 // docs seem to indicate it's not optional, but the one example I can
@@ -263,7 +280,10 @@ impl Display {
 
                 let ddc = ddc_i2c::I2cDdc::new(i2c);
 
-                let idstr = format!("displayid:{}/{}", id_prefix, id.display_id);
+                let mut idreg = idreg.lock().unwrap();
+                let idstr = idreg
+                    .insert(format!("displayid:{}/{}", id_prefix, id.display_id))
+                    .finalize(&mut idreg, || format!("index:{i}.{subi}"));
                 Ok(Display::new(Handle::Nvapi(ddc), idstr))
             }))
         }))
@@ -351,5 +371,80 @@ impl Display {
                 },
             })
             .collect()
+    }
+}
+
+#[allow(unused)]
+#[derive(Default)]
+struct IdRegistry {
+    ids: BTreeSet<String>,
+}
+
+#[allow(unused)]
+impl IdRegistry {
+    fn insert(&mut self, id: String) -> Option<String> {
+        let id = Self::sanitize_id(id);
+        match self.ids.insert(id.clone()) {
+            true => Some(id),
+            false => None,
+        }
+    }
+
+    fn finalize(&mut self, prev: Option<String>, id: impl FnOnce() -> String) -> String {
+        self.try_insert_with(prev, || Some(id())).unwrap()
+    }
+
+    fn try_insert_with(&mut self, prev: Option<String>, id: impl FnOnce() -> Option<String>) -> Option<String> {
+        if let Some(prev) = prev {
+            return Some(prev)
+        }
+        match id() {
+            Some(id) => {
+                let id = Self::sanitize_id(id);
+                if self.ids.insert(id.clone()) {
+                    Some(id)
+                } else {
+                    None
+                }
+            },
+            _ => None,
+        }
+    }
+
+    fn sanitize_id(id: String) -> String {
+        if id.contains(&['\\', '{', '}']) {
+            id.replace("\\", "/").replace(&['{', '}'], "")
+        } else {
+            id
+        }
+    }
+}
+
+#[allow(unused)]
+trait InsertId: Sized {
+    fn insert_id_with_opt(self, ids: &mut IdRegistry, id: impl FnOnce() -> Option<String>) -> Option<String>;
+    fn finalize(self, ids: &mut IdRegistry, id: impl FnOnce() -> String) -> String;
+
+    fn insert_id(self, ids: &mut IdRegistry, id: String) -> Option<String> {
+        self.insert_id_with(ids, || id)
+    }
+
+    fn insert_id_with(self, ids: &mut IdRegistry, id: impl FnOnce() -> String) -> Option<String> {
+        self.insert_id_with_opt(ids, || Some(id()))
+    }
+
+    fn indexed(self, ids: &mut IdRegistry, i: usize) -> String {
+        self.finalize(ids, || format!("index:{i}"))
+    }
+}
+
+#[allow(unused)]
+impl InsertId for Option<String> {
+    fn insert_id_with_opt(self, ids: &mut IdRegistry, id: impl FnOnce() -> Option<String>) -> Option<String> {
+        ids.try_insert_with(self, id)
+    }
+
+    fn finalize(self, ids: &mut IdRegistry, id: impl FnOnce() -> String) -> String {
+        ids.finalize(self, id)
     }
 }
