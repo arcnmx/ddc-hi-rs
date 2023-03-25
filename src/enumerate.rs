@@ -30,7 +30,10 @@ impl Display {
     #[cfg(feature = "has-ddc-winapi")]
     pub fn enumerate_winapi() -> Result<impl Iterator<Item = Result<Display, ddc_winapi::Error>>, ddc_winapi::Error> {
         use {
-            ddc_winapi::{DeviceInfo, DeviceInfoSet, DevicePropertyKey, DisplayDevice, MonitorDevice, Output},
+            ddc_winapi::{
+                device::DEVCLASS_MONITOR, DeviceInfo, DeviceInfoSet, DevicePropertyKey, DisplayDevice, MonitorDevice,
+                Output,
+            },
             std::{
                 iter,
                 sync::{Arc, Mutex, RwLock},
@@ -192,7 +195,10 @@ impl Display {
             let id = mon_device
                 .as_ref()
                 .and_then(|mon| match mon {
-                    Ok(mon) => Some(format!("mon:{}", mon.id())),
+                    Ok(mon) => match &format!("mon:{}", mon.id())[..] {
+                        "mon:" => None,
+                        id => Some(id.replace(&format!("\\{DEVCLASS_MONITOR}"), "")),
+                    },
                     _ => None,
                 })
                 .and_then(|id| idreg.insert(id));
